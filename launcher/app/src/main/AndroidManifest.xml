@@ -8,6 +8,8 @@
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Local Redmi build only: trending_posters fetches TMDB's trending list and backdrops once a day. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!-- Needed since Android 10 to read the Wi-Fi network name for the network pill. Never requested at
          runtime: build-and-install grants it with pm grant, so lint's Android 12 "ask for COARSE with
@@ -147,6 +149,39 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/home_key_service" />
         </service>
+
+        <!-- Puts HomeKeyService and HomeVoiceService back after a force stop (standby on Redmi Android 9). Opt-in:
+             cmd notification allow_listener; see HelperKeeper. -->
+        <service
+            android:name=".HelperKeeper"
+            android:label="@string/home_key_name"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+        <!-- Voice slot for stock_home_redirect, so Home returns without Android's five-second app switch pause.
+             Opt-in: settings put secure voice_interaction_service; see HomeVoiceService. -->
+        <service
+            android:name=".HomeVoiceService"
+            android:label="@string/home_key_name"
+            android:exported="true"
+            android:permission="android.permission.BIND_VOICE_INTERACTION">
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.voice_interaction"
+                android:resource="@xml/home_voice_service" />
+        </service>
+        <service
+            android:name=".HomeVoiceService$Sessions"
+            android:exported="true"
+            android:permission="android.permission.BIND_VOICE_INTERACTION" />
+        <service
+            android:name=".HomeVoiceService$Recognizer"
+            android:exported="false" />
 
         <!-- The same clock, started by Home itself after home_idle_clock_minutes without input. -->
         <activity

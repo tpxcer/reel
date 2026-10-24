@@ -136,6 +136,23 @@
             android:fontFamily="@string/font_light"
             android:visibility="gone" />
 
+
+        <!-- trending_posters: the picture's synopsis under its title, three lines so the shelf never jumps. -->
+        <TextView
+            android:id="@+id/heroOverview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxWidth="760dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="8dp"
+            android:lines="3"
+            android:ellipsize="end"
+            android:lineSpacingExtra="2dp"
+            android:textColor="#CCFFFFFF"
+            android:textSize="14sp"
+            android:fontFamily="@string/font_light"
+            android:visibility="gone" />
+
         <LinearLayout
             android:id="@+id/heroDots"
             android:layout_width="wrap_content"
@@ -310,6 +327,15 @@
                     style="@style/TopButton"
                     android:text="@string/inputs"
                     android:drawableStart="@drawable/ic_input"
+                    android:nextFocusDown="@+id/grid" />
+
+                <!-- stock_home_redirect: opens the stock launcher until the next Home press. -->
+                <TextView
+                    android:id="@+id/btnStockHome"
+                    style="@style/TopButton"
+                    android:visibility="gone"
+                    android:text="@string/stock_home"
+                    android:drawableStart="@drawable/ic_home_settings_pill"
                     android:nextFocusDown="@+id/grid" />
 
                 <TextView

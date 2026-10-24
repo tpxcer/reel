@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Screensaver (ClockDream): clock and date that drift around a black screen over an ambient glow. -->
+<!-- Screensaver (ClockDream): clock and date that drift around a black screen over an ambient glow. With trending
+     pictures saved (trending_posters) it shows them instead, one after another, with the title and synopsis. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,6 +10,75 @@
         android:id="@+id/dreamAmbient"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <!-- Two pictures cross-fade; the incoming one slowly zooms in. -->
+    <ImageView
+        android:id="@+id/dreamPosterA"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:alpha="0"
+        android:importantForAccessibility="no" />
+
+    <ImageView
+        android:id="@+id/dreamPosterB"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:alpha="0"
+        android:importantForAccessibility="no" />
+
+    <View
+        android:id="@+id/dreamScrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/dreamCaption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="80dp"
+        android:layout_marginBottom="72dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/dreamTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxWidth="900dp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="#FFFFFFFF"
+            android:textSize="48sp"
+            android:fontFamily="@string/font_light"
+            android:letterSpacing="-0.02"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/dreamOverview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxWidth="760dp"
+            android:layout_marginTop="14dp"
+            android:maxLines="3"
+            android:ellipsize="end"
+            android:lineSpacingExtra="4dp"
+            android:textColor="#D9FFFFFF"
+            android:textSize="16sp"
+            android:fontFamily="@string/font_light" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/trending_credit"
+            android:textColor="#99FFFFFF"
+            android:textSize="12sp"
+            android:fontFamily="@string/font_regular" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/dreamContent"
@@ -23,6 +93,7 @@
             android:baselineAligned="true">
 
             <TextClock
+                android:id="@+id/dreamClock"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:format12Hour="h:mm"
@@ -34,6 +105,7 @@
                 android:includeFontPadding="false" />
 
             <TextClock
+                android:id="@+id/dreamAmPm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
@@ -47,6 +119,7 @@
         </LinearLayout>
 
         <TextClock
+            android:id="@+id/dreamDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"

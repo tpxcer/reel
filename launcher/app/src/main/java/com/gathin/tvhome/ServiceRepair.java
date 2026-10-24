@@ -18,9 +18,16 @@ import java.util.List;
  * record when Android unbinds it (the user turned it off); a force stop kills the process before that, so the
  * record stays. Home starting again puts recorded helpers back on the list, when the installer granted
  * WRITE_SECURE_SETTINGS. With the flag off nothing is recorded and nothing is restored.
+ *
+ * The voice interaction slot (HomeVoiceService) is cleared by a force stop the same way, and is recorded and put
+ * back the same way, but only while the slot is still empty: an assistant chosen since then is left alone.
  */
 final class ServiceRepair {
     private static final String PREFS = "accessibility_helpers";
+    private static final String VOICE_PREFS = "voice_slot";
+    private static final String VOICE_KEY = "service";
+    /** Settings.Secure.VOICE_INTERACTION_SERVICE, hidden from the SDK. */
+    private static final String VOICE_SETTING = "voice_interaction_service";
 
     private ServiceRepair() {
     }
@@ -33,37 +40,63 @@ final class ServiceRepair {
         prefs(context).edit().remove(service.getName()).apply();
     }
 
+    static void voiceConnected(Context context, Class<?> service) {
+        voicePrefs(context).edit().putString(VOICE_KEY, service.getName()).apply();
+    }
+
+    static void voiceDisconnected(Context context) {
+        voicePrefs(context).edit().remove(VOICE_KEY).apply();
+    }
+
     static void restore(Context context) {
         if (context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS)
                 != PackageManager.PERMISSION_GRANTED) return;
         try {
             ContentResolver cr = context.getContentResolver();
-            String list = Settings.Secure.getString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            List<ComponentName> enabled = new ArrayList<>();
-            if (list != null) {
-                for (String entry : list.split(":")) {
-                    ComponentName name = ComponentName.unflattenFromString(entry);
-                    if (name != null) enabled.add(name);
-                }
+            restoreHelpers(context, cr);
+            String voice = voicePrefs(context).getString(VOICE_KEY, null);
+            if (voice != null && isEmptySetting(Settings.Secure.getString(cr, VOICE_SETTING))) {
+                Settings.Secure.putString(cr, VOICE_SETTING,
+                        new ComponentName(context.getPackageName(), voice).flattenToShortString());
             }
-            StringBuilder updated = new StringBuilder(list == null || list.equals("null") ? "" : list);
-            boolean missing = false;
-            for (String service : prefs(context).getAll().keySet()) {
-                ComponentName name = new ComponentName(context.getPackageName(), service);
-                if (enabled.contains(name)) continue;
-                if (updated.length() > 0) updated.append(':');
-                updated.append(name.flattenToShortString());
-                missing = true;
-            }
-            if (!missing) return;
-            Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, updated.toString());
-            Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1);
         } catch (RuntimeException ignored) {
             // The setting is the system's; a refusal leaves the helper off, as before.
         }
     }
 
+    private static void restoreHelpers(Context context, ContentResolver cr) {
+        String list = Settings.Secure.getString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        List<ComponentName> enabled = new ArrayList<>();
+        if (list != null) {
+            for (String entry : list.split(":")) {
+                ComponentName name = ComponentName.unflattenFromString(entry);
+                if (name != null) enabled.add(name);
+            }
+        }
+        StringBuilder updated = new StringBuilder(isEmptySetting(list) ? "" : list);
+        boolean missing = false;
+        for (String service : prefs(context).getAll().keySet()) {
+            ComponentName name = new ComponentName(context.getPackageName(), service);
+            if (enabled.contains(name)) continue;
+            if (updated.length() > 0) updated.append(':');
+            updated.append(name.flattenToShortString());
+            missing = true;
+        }
+        if (!missing) return;
+        Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, updated.toString());
+        Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1);
+    }
+
+    /** settings get prints "null" for a key that was never written; a cleared slot can also be empty. */
+    static boolean isEmptySetting(String value) {
+        return value == null || value.isEmpty() || value.equals("null");
+    }
+
     private static SharedPreferences prefs(Context context) {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
+
+    private static SharedPreferences voicePrefs(Context context) {
+        return context.getSharedPreferences(VOICE_PREFS, Context.MODE_PRIVATE);
     }
 }

@@ -145,4 +145,30 @@
     <!-- Cinematic top shelf (cinematic_home): the line under the focused dock app's name; %1$s is when it was
          last opened, e.g. "5 minutes ago" or "yesterday, 9:40 pm". -->
     <string name="last_opened">Last opened %1$s</string>
+    <!-- Top-bar pill that opens the stock_home_redirect launcher and leaves it up until the next Home. -->
+    <string name="stock_home">Stock home</string>
+    <!-- Cinematic shelf backdrops (trending_posters, Launcher settings > Backdrop). %1$s is the film's or the picture's title. -->
+    <string name="trending_title_line">%1$s · Image: TMDB</string>
+    <string name="trending_credit">Trending this week · Images: TMDB</string>
+    <string name="bing_title_line">%1$s · Bing image of the day</string>
+    <string name="backdrop_label">Backdrop</string>
+    <string name="backdrop_state">Backdrop: %1$s</string>
+    <string name="backdrop_theme_default">Theme default</string>
+    <string name="backdrop_tmdb">TMDB trending stills</string>
+    <string name="backdrop_bing">Bing image of the day</string>
+    <string name="backdrop_scenes">Scenic wallpapers</string>
+    <string name="backdrop_posters">My posters</string>
+    <!-- The viewer's own TMDB key; none is built in. %1$s is one of the three states below. -->
+    <string name="tmdb_key_label">TMDB API key</string>
+    <string name="tmdb_key_state">TMDB API key: %1$s</string>
+    <string name="tmdb_key_missing">not set</string>
+    <string name="tmdb_key_set">set</string>
+    <!-- %1$s is the last fetch, e.g. "2026-10-24 08:51:51 OK 10". -->
+    <string name="tmdb_key_set_status">set · last fetch %1$s</string>
+    <string name="tmdb_key_help">TMDB stills need your own key. Sign up free at themoviedb.org, then copy the API Key (32 characters) or the API Read Access Token from Settings > API, then press Enter (↵) on the keyboard. It is kept only on this TV.</string>
+    <string name="tmdb_key_hint">API Key or Read Access Token</string>
+    <string name="tmdb_key_save">Save</string>
+    <string name="tmdb_key_clear">Clear</string>
+    <string name="tmdb_key_invalid">That is not a TMDB API Key or Read Access Token. Check it and try again.</string>
+    <string name="tmdb_notice">This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
 </resources>

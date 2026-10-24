@@ -105,7 +105,8 @@
          number as the int extra "input"; "HW<n>=-" leaves a port the board reports but the set does not have
          out of the menu. Xiaomi/Redmi China firmware (MiTV-MFTP0) needs input_action
          com.xiaomi.mitv.tvplayer.EXTSRC_PLAY and MStar numbers: HW5=23, HW6=24, HW7=25, HW8=-, HW2=2,
-         HW3=-, HW4=- (see examples/redmi-mitv-mftp0). Leave empty to omit. -->
+         HW3=-, HW4=- (see examples/redmi-mitv-mftp0). A theme's config.json can set "input_sources" too.
+         Leave empty to omit. -->
     <string-array name="input_sources" translatable="false">
     </string-array>
 
@@ -234,6 +235,10 @@
     <!-- Grid rows left visible under the dock on the home screen. 0 = dock sits at the very bottom. Tiles shrink if
          the dock, its title and this many rows would not otherwise fit the screen height. -->
     <integer name="rows_below_dock">0</integer>
+    <!-- Space under the dock band in dp, -40 to 60, so the dock can sit lower on screen. 30 is the original layout;
+         below 0 it eats into the grid's bottom padding.
+         A theme can set "dock_bottom_room". -->
+    <integer name="dock_bottom_room">30</integer>
 
     <!-- The focused dock app's name in large type above the dock. false keeps only the glow, which leaves room
          for bigger tiles when rows_below_dock is 2 or 3. -->
@@ -291,6 +296,15 @@
          dots, the focus glow takes the app's colour and the dock band turns translucent. false keeps the plain
          shelf. Can also be set with "cinematic_home": true in a theme's config.json. -->
     <bool name="cinematic_home">false</bool>
+    <!-- With cinematic_home: a dock app with posters/<package>.jpg (or .png) in the theme folder shows that picture
+         sharp behind the shelf instead of its softened artwork; apps without one keep the softened artwork.
+         Can also be set with "hero_posters": true in a theme's config.json. -->
+    <bool name="hero_posters">false</bool>
+    <!-- With cinematic_home: once a day, when Home comes up, fetch this week's popular films and series from TMDB
+         and show one behind each dock app that has no posters/ picture, crediting TMDB with the title. Needs
+         network and the viewer's own TMDB key, typed in Launcher settings; no key is built in. Can also be set
+         with "trending_posters": true in a theme's config.json. -->
+    <bool name="trending_posters">false</bool>
 
     <!-- The glow behind the dock in the focused app's colour (red for YouTube, blue for Prime Video). false keeps
          only background_color or the wallpaper behind everything. Can also be set with "ambient_glow": false in a

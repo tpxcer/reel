@@ -7,11 +7,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.UserManager;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
 
 import java.util.Collections;
@@ -49,6 +55,35 @@ public class HomeKeyService extends AccessibilityService {
     private BroadcastReceiver unlockReceiver;
     /** The stock launcher's HOME activities (stock_home_redirect), disabled ones included. */
     private final Set<String> stockHome = new HashSet<>();
+    // Redmi Android 9 blocks application switches briefly after the physical Home key.
+    private final Handler redirectHandler = new Handler(Looper.getMainLooper());
+    private final Runnable retryRedirect = () -> {
+        if (!stockHomeHeld) openLocalHome();
+    };
+    private final Runnable checkStockHome = this::openIfStockHomeShows;
+    private String stockHomePackage = "";
+    private BroadcastReceiver homeReceiver;
+    /** Sent by Xiaomi's PowerManagerService when the screensaver time is up and no video plays. */
+    private static final String XIAOMI_SCREENSAVER = "com.duokan.intent.action.show.screensaver";
+    /** The stock launcher's tile opened it on purpose: leave it up until the next Home press. */
+    private static volatile boolean stockHomeHeld;
+    /** The Home press the tile made for that, which must not count as the next one. */
+    private static volatile long ownHomeUntil;
+    /** This service while stock_home_redirect is configured and Android has it bound; null otherwise. */
+    @android.annotation.SuppressLint("StaticFieldLeak")
+    private static HomeKeyService redirecting;
+
+    /** The 「小米桌面」tile. Only the system may start that launcher, so press Home for it; false if unavailable. */
+    static boolean openStockHome() {
+        HomeKeyService service = redirecting;
+        if (service == null) return false;
+        stockHomeHeld = true;
+        ownHomeUntil = SystemClock.uptimeMillis() + 2000;
+        if (service.performGlobalAction(GLOBAL_ACTION_HOME)) return true;
+        stockHomeHeld = false;
+        ownHomeUntil = 0;
+        return false;
+    }
 
     @Override
     protected void onServiceConnected() {
@@ -85,6 +120,10 @@ public class HomeKeyService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        if (redirecting == this) redirecting = null;
+        redirectHandler.removeCallbacks(retryRedirect);
+        redirectHandler.removeCallbacks(checkStockHome);
+        if (homeReceiver != null) unregisterReceiver(homeReceiver);
         stopWaitingForUnlock();
         super.onDestroy();
     }
@@ -102,14 +141,60 @@ public class HomeKeyService extends AccessibilityService {
         appScancodes = RemoteKeys.parseAppScancodes(config.appKeys);
         RemoteKeys.applyKeyFilter(this, config.keyFilter);
         stockHome.clear();
+        stockHomePackage = config.stockHomeRedirect;
+        if (!stockHomePackage.isEmpty() && homeReceiver == null) {
+            homeReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
+                        checkStockHomeSoon();
+                        return;
+                    }
+                    if (XIAOMI_SCREENSAVER.equals(intent.getAction())) {
+                        showScreensaver();
+                        return;
+                    }
+                    if (!"homekey".equals(intent.getStringExtra("reason"))) return;
+                    if (SystemClock.uptimeMillis() < ownHomeUntil) {
+                        ownHomeUntil = 0;
+                        return;
+                    }
+                    stockHomeHeld = false;
+                    redirectHandler.removeCallbacks(retryRedirect);
+                    // The stock launcher already in front raises no window event. With HomeVoiceService the early
+                    // try goes through; without it Android holds it back until the second one.
+                    redirectHandler.postDelayed(retryRedirect, 700);
+                    redirectHandler.postDelayed(retryRedirect, 6500);
+                }
+            };
+            // Observe the system Home notification without filtering any key events.
+            IntentFilter homeFilter = new IntentFilter(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+            homeFilter.addAction(Intent.ACTION_SCREEN_ON);
+            // Xiaomi's timer asks its own screensaver app, disabled on this TV, to show; the launcher's answers.
+            if (config.homeIdleClockMinutes > 0) homeFilter.addAction(XIAOMI_SCREENSAVER);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(homeReceiver, homeFilter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                registerLegacyHomeReceiver(homeFilter);
+            }
+        }
         if (!config.stockHomeRedirect.isEmpty()) {
             Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setPackage(config.stockHomeRedirect);
             for (ResolveInfo ri : getPackageManager().queryIntentActivities(home, PackageManager.MATCH_DISABLED_COMPONENTS)) {
                 stockHome.add(ri.activityInfo.name);
             }
+            redirecting = this;
+            // Bound again after a force stop (HelperKeeper) or at boot, while the stock launcher may be showing.
+            if (getSystemService(PowerManager.class).isInteractive()) checkStockHomeSoon();
         }
         holdAppKeys = RemoteKeys.parseHoldAppKeys(config.appKeys);
         holdAppScancodes = RemoteKeys.parseHoldAppScancodes(config.appKeys);
+    }
+
+    // Called only below API 33, where receiver export flags are not required.
+    @android.annotation.SuppressLint("UnspecifiedRegisterReceiverFlag")
+    private void registerLegacyHomeReceiver(IntentFilter filter) {
+        registerReceiver(homeReceiver, filter);
     }
 
     private boolean isSettingsKey(KeyEvent event) {
@@ -153,6 +238,7 @@ public class HomeKeyService extends AccessibilityService {
     /** Unbound by Android: the user turned the helper off, so Home doesn't put it back (ServiceRepair). */
     @Override
     public boolean onUnbind(Intent intent) {
+        if (redirecting == this) redirecting = null;
         if (repairRecord) ServiceRepair.disconnected(this, getClass());
         return super.onUnbind(intent);
     }
@@ -161,11 +247,50 @@ public class HomeKeyService extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent event) {
         // stock_home_redirect: the firmware turned the stock launcher back on and its home screen came up.
         if (stockHome.isEmpty() || event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
-        CharSequence cls = event.getClassName();
-        if (cls != null && stockHome.contains(cls.toString())) {
-            startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setPackage(getPackageName())
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
+        CharSequence pkg = event.getPackageName();
+        // Another application took focus: never pull it away with the pending retry.
+        if (pkg != null && !stockHomePackage.contentEquals(pkg)
+                && !"android".contentEquals(pkg) && !"com.android.systemui".contentEquals(pkg)
+                && !"com.xiaomi.mitv.systemui".contentEquals(pkg)) {
+            redirectHandler.removeCallbacks(retryRedirect);
+            redirectHandler.removeCallbacks(checkStockHome);
         }
+        CharSequence cls = event.getClassName();
+        if (cls != null && stockHome.contains(cls.toString()) && !stockHomeHeld) {
+            redirectHandler.removeCallbacks(retryRedirect);
+            redirectHandler.postDelayed(retryRedirect, 5500);
+            openLocalHome();
+        }
+    }
+
+    private void showScreensaver() {
+        try {
+            startActivity(new Intent(this, ClockActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (RuntimeException refused) {
+            // The firmware held it back; the timer asks again next time.
+        }
+    }
+
+    /** Standby on Redmi Android 9 opens the stock launcher, which raises no window event on waking. */
+    private void checkStockHomeSoon() {
+        redirectHandler.removeCallbacks(checkStockHome);
+        // Once the wake-up screen is gone, and again in case it was still up.
+        redirectHandler.postDelayed(checkStockHome, 1000);
+        redirectHandler.postDelayed(checkStockHome, 3000);
+    }
+
+    private void openIfStockHomeShows() {
+        if (stockHomeHeld) return;
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null) return;
+        CharSequence pkg = root.getPackageName();
+        root.recycle();
+        if (pkg != null && stockHomePackage.contentEquals(pkg)) openLocalHome();
+    }
+
+    private void openLocalHome() {
+        startActivity(new Intent(this, MainActivity.class).setAction(Intent.ACTION_MAIN)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
     }
 
     @Override

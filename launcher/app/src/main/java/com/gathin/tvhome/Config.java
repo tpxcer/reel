@@ -40,6 +40,10 @@ final class Config {
     static final String ROWS_BELOW_DOCK_KEY = "rows_below_dock";
     static final String WALLPAPER_CHOICE_KEY = "wallpaper_choice";
     static final String DOCK_OPACITY_KEY = "dock_opacity";
+    /** The backdrop picked in Launcher settings; see backdrop. */
+    static final String BACKDROP_CHOICE_KEY = "backdrop_source";
+    static final String BACKDROP_TMDB = "tmdb", BACKDROP_BING = "bing", BACKDROP_SCENES = "scenes", BACKDROP_POSTERS = "posters";
+    static final List<String> BACKDROPS = Arrays.asList(BACKDROP_TMDB, BACKDROP_BING, BACKDROP_SCENES, BACKDROP_POSTERS);
     private static final String THEME_REVISION_NAME = "theme_revision";
     private static final String THEME_SIGNATURE_KEY = "theme_signature";
 
@@ -169,6 +173,20 @@ final class Config {
     final boolean handleViewInputs;
     /** Hold OK on a tile opens a menu (Move, Remove from Home, App info) instead of App info (config.xml / theme tile_menu). */
     final boolean tileMenu;
+    /** Space under the dock band, in dp (config.xml / theme dock_bottom_room); 30 is the original layout, below 0 eats into the bottom padding. */
+    final int dockBottomRoom;
+    /** cinematic_home's backdrop from posters/<package>.jpg in the theme folder, sharp (config.xml / theme hero_posters). */
+    final boolean heroPosters;
+    /** cinematic_home's backdrop from this week's TMDB trending pictures (config.xml / theme trending_posters). */
+    final boolean trendingPosters;
+    /**
+     * What fills the cinematic shelf behind the dock: tmdb (trending pictures), bing (picture of the day), scenes (the
+     * wallpapers/ pictures) or posters (posters/ only); empty for the softened app artwork. Picked in Launcher settings,
+     * otherwise tmdb with trending_posters and posters with hero_posters.
+     */
+    final String backdrop;
+    /** Inputs menu vendor source numbers, "HW5=23" (config.xml / theme input_sources); see MainActivity.mappedSource. */
+    final List<String> inputSources;
 
     private Config(List<String> dockApps, boolean fillDock, List<String> hiddenApps, String liveTvPackage,
                    String liveTvAction, String liveTvInputId, Map<String, String> launchActions, Map<String, String> appLabels,
@@ -182,7 +200,13 @@ final class Config {
                    Festival festival, int[] inputKeycodes, List<String> appKeys, String stockHomeRedirect,
                    List<RaceWeekend.Race> raceCalendar, boolean cinematicHome, boolean ambientGlow, boolean appGlow, int homeIdleClockMinutes,
                    boolean keyFilter, boolean dockGlass, String glowStyle, boolean wallpaperCaptions,
-                   boolean handleViewInputs, boolean tileMenu) {
+                   boolean handleViewInputs, boolean tileMenu, int dockBottomRoom, boolean heroPosters,
+                   boolean trendingPosters, String backdrop, List<String> inputSources) {
+        this.backdrop = backdrop;
+        this.inputSources = Collections.unmodifiableList(inputSources);
+        this.dockBottomRoom = dockBottomRoom;
+        this.heroPosters = heroPosters;
+        this.trendingPosters = trendingPosters;
         this.handleViewInputs = handleViewInputs;
         this.tileMenu = tileMenu;
         this.inputKeycodes = inputKeycodes;
@@ -283,6 +307,9 @@ final class Config {
         String inputUriScheme = res.getString(R.string.input_uri_scheme).trim();
         int columns = res.getInteger(R.integer.columns);
         int rowsBelow = res.getInteger(R.integer.rows_below_dock);
+        int dockBottomRoom = res.getInteger(R.integer.dock_bottom_room);
+        boolean heroPosters = res.getBoolean(R.bool.hero_posters);
+        boolean trendingPosters = res.getBoolean(R.bool.trending_posters);
         boolean animations = res.getBoolean(R.bool.animations);
         boolean advancedEffects = res.getBoolean(R.bool.advanced_effects);
         boolean shamsi = res.getBoolean(R.bool.shamsi_date);
@@ -317,6 +344,7 @@ final class Config {
         int[] inputKeycodes = res.getIntArray(R.array.input_key_keycodes);
         boolean handleViewInputs = res.getBoolean(R.bool.handle_view_inputs);
         List<String> appKeys = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.app_keys)));
+        List<String> inputSources = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.input_sources)));
         String stockHomeRedirect = res.getString(R.string.stock_home_redirect).trim();
         boolean cinematic = res.getBoolean(R.bool.cinematic_home);
         boolean ambientGlow = res.getBoolean(R.bool.ambient_glow);
@@ -347,9 +375,13 @@ final class Config {
             panelExtra = string(json, "source_panel_extra", panelExtra).trim();
             coocaaSources = bool(json, "coocaa_sources", coocaaSources);
             inputAction = string(json, "input_action", inputAction);
+            inputSources = stringList(json, "input_sources", inputSources);
             inputUriScheme = string(json, "input_uri_scheme", inputUriScheme).trim();
             columns = integer(json, "columns", columns, 1, 8);
             rowsBelow = integer(json, "rows_below_dock", rowsBelow, 0, 3);
+            dockBottomRoom = integer(json, "dock_bottom_room", dockBottomRoom, -40, 60);
+            heroPosters = bool(json, "hero_posters", heroPosters);
+            trendingPosters = bool(json, "trending_posters", trendingPosters);
             animations = bool(json, "animations", animations);
             advancedEffects = bool(json, "advanced_effects", advancedEffects);
             shamsi = bool(json, "shamsi_date", shamsi);
@@ -404,6 +436,9 @@ final class Config {
         if (chosenRows >= 0 && chosenRows <= 3) rowsBelow = chosenRows;
         animations = choices.getBoolean("animations", animations);
         advancedEffects = choices.getBoolean("advanced_effects", advancedEffects);
+        String chosenBackdrop = choices.getString(BACKDROP_CHOICE_KEY, null);
+        String backdrop = backdrop(chosenBackdrop, trendingPosters, heroPosters);
+        if (BACKDROPS.contains(chosenBackdrop)) cinematic = true;
         File wallpaper = dir != null ? new File(dir, WALLPAPER_NAME) : null;
         if (wallpaper != null && !(wallpaper.isFile() && wallpaper.length() > 0)) wallpaper = null;
         // A theme can also switch the wallpaper off while the file is still there.
@@ -453,7 +488,14 @@ final class Config {
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, restoreKeyServices, wallpaperEnabled, wallpaper,
                 wallpapers, rotationMinutes, wallpaperDim, dockOpacity, wallpaperOrder, applied,
                 festival, inputKeycodes, appKeys, stockHomeRedirect, json == null ? Collections.emptyList() : raceCalendar(json), cinematic, ambientGlow, appGlow,
-                Math.max(0, idleClockMinutes), keyFilter, dockGlass, glowStyle, wallpaperCaptions, handleViewInputs, tileMenu);
+                Math.max(0, idleClockMinutes), keyFilter, dockGlass, glowStyle, wallpaperCaptions, handleViewInputs, tileMenu,
+                Math.max(-40, Math.min(60, dockBottomRoom)), heroPosters, trendingPosters, backdrop, inputSources);
+    }
+
+    /** The backdrop picked in Launcher settings, else the theme's: tmdb with trending_posters, posters with hero_posters. */
+    static String backdrop(String chosen, boolean trendingPosters, boolean heroPosters) {
+        if (BACKDROPS.contains(chosen)) return chosen;
+        return trendingPosters ? BACKDROP_TMDB : heroPosters ? BACKDROP_POSTERS : "";
     }
 
     /**
@@ -497,12 +539,12 @@ final class Config {
             SharedPreferences.Editor editor = choices.edit();
             if (!"absent".equals(token)) editor.remove("columns").remove("animations")
                     .remove("advanced_effects").remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY)
-                    .remove(DOCK_OPACITY_KEY);
+                    .remove(DOCK_OPACITY_KEY).remove(BACKDROP_CHOICE_KEY);
             editor.putString(THEME_SIGNATURE_KEY, signature).commit();
         } else if (!seen.equals(signature)) {
             choices.edit().remove("columns").remove("animations").remove("advanced_effects")
                     .remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY).remove(DOCK_OPACITY_KEY)
-                    .putString(THEME_SIGNATURE_KEY, signature).commit();
+                    .remove(BACKDROP_CHOICE_KEY).putString(THEME_SIGNATURE_KEY, signature).commit();
         }
     }
 

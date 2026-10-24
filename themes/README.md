@@ -44,7 +44,7 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `app_banners` | list of `"package=banner_name"` | A tile's artwork from a `banner_*` drawable bundled with the launcher (`banner_tv`: magenta with the Live TV glyph) |
 | `input_action` | string | Action sent with an HDMI/AV row's channel URI when nothing handles the standard `VIEW` (XGIMI: `com.xgimi.action.hdmiPlayer`). Only a handler-less set gets here; any app that claims the channel MIME type takes the row instead, so check with `query-activities` ([#805](https://github.com/Gathin23/cleanyourtv/issues/805)) |
 | `input_uri_scheme` | string | Scheme an HDMI/AV row's passthrough URI is sent with instead of `content://`, with no MIME type (YaOS: `live-tv`, which its source player answers) |
-| `input_sources` | list, `config.xml` only | Vendor source numbers for the Inputs menu, `HW<n>=<number>` by the input id's last part; a mapped input opens by sending `input_action` with the number as the int extra `input`, and `HW<n>=-` leaves a port the set doesn't have out of the menu. Xiaomi/Redmi China firmware: [redmi-mitv-mftp0](../examples/redmi-mitv-mftp0/). Not read from a theme |
+| `input_sources` | list of strings | Vendor source numbers for the Inputs menu, `HW<n>=<number>` by the input id's last part; a mapped input opens by sending `input_action` with the number as the int extra `input`, and `HW<n>=-` leaves a port the set doesn't have out of the menu. Xiaomi/Redmi China firmware: [redmi-mitv-mftp0](../examples/redmi-mitv-mftp0/). Not read from a theme |
 | `columns` | 1 to 8 | Tiles per row; tiles shrink to fit from 5 up |
 | `rows_below_dock` | 0 to 3 | Grid rows left visible under the dock; tiles shrink if the dock, its title and that many rows would not fit the screen height |
 | `dock_title` | bool | The focused dock app's name in large type above the dock (`true`); `false` keeps only the glow |
@@ -103,6 +103,9 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `dock_glass` | bool | The dock band as light frosted glass like the top bar's pills (`false` by default); suits `sky_intensity` or a wallpaper, where the solid band reads as a dark slab |
 | `ambient_glow` | bool | The glow behind the dock in the focused app's colour (`true` by default); `false` keeps only `background_color` or the wallpaper, e.g. for a calm photo background |
 | `app_glow` | bool | The focus highlight glows in the focused app's colour on every tile, as `cinematic_home` does for the dock (`false` by default) |
+| `dock_bottom_room` | -40 to 60 | Space under the dock band in dp; 30 is the original layout, lower values put the dock nearer the bottom edge |
+| `hero_posters` | bool | With `cinematic_home`: a dock app with `posters/<package>.jpg` (or `.png`) in the theme folder shows that picture sharp behind the shelf instead of its softened artwork |
+| `trending_posters` | bool | With `cinematic_home`: once a day, this week's popular films and series from TMDB behind the dock apps without a poster, with the title, a three-line synopsis and TMDB's credit. Needs network and the viewer's own TMDB key, typed in Launcher settings; no key is built in. Launcher settings > Backdrop also offers Bing's image of the day, the `wallpapers/` scenes or `posters/` only |
 
 ## Wallpapers
 

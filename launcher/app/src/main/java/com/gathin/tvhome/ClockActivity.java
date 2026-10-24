@@ -9,7 +9,8 @@ import android.view.View;
 /**
  * The clock screensaver shown by Home itself after home_idle_clock_minutes without input. Some TVs' own
  * screens (CVTE's live TV) do not keep the screen on, so the system screensaver would cut into programmes;
- * this one only ever starts from Home. Any key returns to Home.
+ * this one starts from Home, or from HomeKeyService when Xiaomi's own screensaver timer fires (it does not start the
+ * system screensaver). Any key returns to where the TV was.
  */
 public class ClockActivity extends Activity {
 

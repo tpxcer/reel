@@ -51,6 +51,7 @@ import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -119,6 +120,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The app library is on (config.xml, app_library): only then can the tile menu take an app off Home. */
     private boolean appLibraryEnabled;
     private String inputAction;
+    private List<String> inputSources = Collections.emptyList();
     private String inputUriScheme;
     private String sourcePanelService;
     private String sourcePanelAction;
@@ -135,6 +137,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The top shelf: heroName, plus the cinematic shelf's "Last opened" line and dock position dots. */
     private View hero;
     private TextView heroMeta;
+    private TextView heroOverview;
     private LinearLayout heroDots;
     /** Cinematic top shelf (config.xml, cinematic_home): the focused dock app's artwork behind a larger shelf. */
     private boolean cinematic;
@@ -147,6 +150,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private String glowStyle;
     private ImageView heroArt;
     private static final float HERO_ART_ALPHA = 0.5f;
+    /** A hero_posters picture is meant to be seen: only the scrim stands between it and the screen. */
+    private static final float HERO_POSTER_ALPHA = 1f;
+    private float heroArtAlpha = HERO_ART_ALPHA;
+    /** hero_posters or trending_posters on the cinematic shelf; null otherwise. */
+    private HeroPosters heroPosters;
+    /** The daily pictures behind the dock (tmdb, bing or scenes), each with its own caption and synopsis. */
+    private boolean pictureShelf;
+    private String backdrop = "";
+    private boolean fetchTrending;
     /** Softened artwork per app (HeroArt, about 5 KB each), made the first time its dock tile is focused. */
     private final Map<String, Bitmap> heroArtCache = new HashMap<>();
     /** The app whose artwork heroArt shows, so focusing it again only fades it back in. */
@@ -365,6 +377,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         liveTvInputId = cfg.liveTvInputId;
         appLibraryEnabled = cfg.appLibrary;
         inputAction = cfg.inputAction;
+        inputSources = cfg.inputSources;
         inputUriScheme = cfg.inputUriScheme;
         sourcePanelService = cfg.sourcePanelService;
         sourcePanelAction = cfg.sourcePanelAction;
@@ -395,9 +408,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // shelf would render it through an offscreen buffer first, as the glow above notes.
         hero.forceHasOverlappingRendering(false);
         heroMeta = findViewById(R.id.heroMeta);
+        heroOverview = findViewById(R.id.heroOverview);
         heroDots = findViewById(R.id.heroDots);
         heroArt = findViewById(R.id.heroArt);
         cinematic = cfg.cinematicHome;
+        backdrop = cinematic ? cfg.backdrop : "";
+        pictureShelf = !backdrop.isEmpty() && !Config.BACKDROP_POSTERS.equals(backdrop);
+        // The screensaver shows the TMDB pictures whatever the shelf shows, so they stay fresh with trending_posters.
+        fetchTrending = cfg.trendingPosters || Config.BACKDROP_TMDB.equals(backdrop);
+        if (!backdrop.isEmpty()) {
+            DisplayMetrics screen = getResources().getDisplayMetrics();
+            boolean own = Config.BACKDROP_POSTERS.equals(backdrop) || (Config.BACKDROP_TMDB.equals(backdrop) && cfg.heroPosters);
+            heroPosters = new HeroPosters(Config.dir(this), own, screen.widthPixels, screen.heightPixels,
+                    cfg.wallpaperTrueColor);
+            heroPosters.setTrending(dailyPictures());
+        }
         glowStyle = cfg.glowStyle;
         if (cinematic) setUpCinematicShelf();
         // dock_title false: the name above the dock (and the cinematic lines under it) never shows; the glow
@@ -406,6 +431,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         greeting = findViewById(R.id.greeting);
         clockBlock = findViewById(R.id.leftBlock);
         greetingColor = greeting.getCurrentTextColor();
+        if (pictureShelf) {
+            // With the trending pictures the header stays out of the way: a small clock and date, no greeting.
+            greeting.setVisibility(View.GONE);
+            ((TextView) findViewById(R.id.clock)).setTextSize(TypedValue.COMPLEX_UNIT_SP, 30f);
+            ((TextView) findViewById(R.id.ampm)).setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f);
+            ((TextView) findViewById(R.id.date)).setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f);
+        }
         if (getResources().getBoolean(R.bool.rtl_menu_bar)) {
             // Center Hebrew greetings over the numeric time, independent of a visible AM/PM label.
             findViewById(R.id.clock).addOnLayoutChangeListener((v, l, t, right, bottom, ol, ot, or, ob) -> {
@@ -521,7 +553,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             // Keep the hero below the header when the library is enabled on a short screen,
             // even when the theme requests an extra visible row below the dock.
             int shelfClearance = cfg.appLibrary ? hero.getMeasuredHeight() + (int) (40 * density) : 0;
-            int want = Math.max(shelfClearance, h - dockRow - gridRows - (int) (AppAdapter.BOTTOM_ROOM_DP * density));
+            int want = Math.max(shelfClearance, h - dockRow - gridRows - (int) (cfg.dockBottomRoom * density));
             // Where the rows cannot fit even at the smallest tile (3 rows with the title on), the title keeps its
             // room above the dock and the last rows run off the bottom instead of the title drawing over the clock.
             if (MainActivity.this.dockRow && cfg.dockTitle && rowsBelowDock > 0) want = Math.max(want, (int) (AppAdapter.TITLE_ROOM_DP * density));
@@ -600,6 +632,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             libraryFromTopBar = true;   // closing it goes back to this button, not to the pill after the last row
         });
         btnLibraryTop.setVisibility(cfg.libraryButton && cfg.appLibrary ? View.VISIBLE : View.GONE);
+        // stock_home_redirect sends that launcher back here; this pill opens it on purpose until the next Home.
+        TextView btnStockHome = findViewById(R.id.btnStockHome);
+        btnStockHome.setOnClickListener(v -> {
+            if (!HomeKeyService.openStockHome()) Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+        });
+        btnStockHome.setVisibility(cfg.stockHomeRedirect.isEmpty() || cfg.topMenu ? View.GONE : View.VISIBLE);
         iconOnlyButtons = cfg.iconOnlyButtons;
         topMenu = cfg.topMenu;
         wifiIconOnly = iconOnlyButtons && cfg.wifiLabelWidth <= 0;
@@ -625,6 +663,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (cfg.wifiLabelWidth > 0) btnWifi.setMaxWidth(Math.round(cfg.wifiLabelWidth * density));
             else makeIconOnly(btnWifi);
             makeIconOnly((TextView) btnSettings);
+            makeIconOnly(btnStockHome);
         }
         btnSettings.setOnLongClickListener(v -> {
             showSettingsMenu();
@@ -653,8 +692,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnSettings.setOnKeyListener(pillKeys);
         btnReorder.setOnKeyListener(pillKeys);
         btnLibraryTop.setOnKeyListener(pillKeys);
+        btnStockHome.setOnKeyListener(pillKeys);
         if (advancedEffects) {
-            for (View button : new View[]{btnInputs, btnWifi, btnReorder, btnLibraryTop, btnSettings}) {
+            for (View button : new View[]{btnInputs, btnStockHome, btnWifi, btnReorder, btnLibraryTop, btnSettings}) {
                 button.setOnFocusChangeListener((view, focused) -> view.animate()
                         .scaleX(focused ? 1.04f : 1f).scaleY(focused ? 1.04f : 1f)
                         .setDuration(reducedMotion ? Motion.REDUCED_MS : 160).start());
@@ -792,6 +832,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         restartIdleClock();
         promptsPaused = false;
+        TrendingPosters.importPushedKey(this);   // a tmdb_key.txt pushed over ADB moves into private storage
+        if (Config.BACKDROP_BING.equals(backdrop)) BingDaily.refreshIfDue(this, this::onTrendingUpdated);
+        if (fetchTrending) TrendingPosters.refreshIfDue(this, this::onTrendingUpdated);
         if (grid.getAdapter() == null) grid.setAdapter(adapter);   // dropped by onTrimMemory
         switch (tileRefresh.onResume(packagesChangedSinceRebuild())) {
             case REBUILD:
@@ -936,6 +979,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         final List<Cards.Card> none = Collections.emptyList();
         // An updated app may bring new artwork; the backdrop is cheap to make again.
         heroArtCache.clear();
+        if (heroPosters != null) heroPosters.clear();
         heroArtKey = null;
         // One LEANBACK query for both the tiles and the card checks.
         final List<ResolveInfo> leanback = getPackageManager().queryIntentActivities(
@@ -1027,6 +1071,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         grid.setAdapter(null);
         grid.getRecycledViewPool().clear();
         heroArtCache.clear();
+        if (heroPosters != null) heroPosters.clear();
         heroArtKey = null;
         tileRefresh.invalidate();
     }
@@ -1046,6 +1091,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.onDestroy();
         unregisterReceiver(packageReceiver);
         wallpaperPlayer.close();
+        if (heroPosters != null) heroPosters.close();
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (tim != null) tim.unregisterCallback(inputCallback);
@@ -1514,8 +1560,30 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     // ---- top shelf -------------------------------------------------------------------------------
 
+    private String heroLabel(int position) {
+        if (!pictureShelf) return adapter.labelAt(position);
+        HeroPosters.Source poster = heroPosters.sourceFor(adapter.packageAt(position), position);
+        if (poster == null || poster.caption == null || poster.caption.isEmpty()) return adapter.labelAt(position);
+        return getString(Config.BACKDROP_BING.equals(backdrop) ? R.string.bing_title_line : R.string.trending_title_line,
+                poster.caption);
+    }
+
+    /** The pictures the dock slots take in turn: TMDB's, Bing's, or the wallpapers/ scenes without a caption. */
+    private List<TrendingPosters.Item> dailyPictures() {
+        File dir = Config.dir(this);
+        if (Config.BACKDROP_TMDB.equals(backdrop)) return TrendingPosters.saved(dir);
+        if (Config.BACKDROP_BING.equals(backdrop)) return BingDaily.saved(dir);
+        List<TrendingPosters.Item> scenes = new ArrayList<>();
+        if (Config.BACKDROP_SCENES.equals(backdrop) && dir != null) {
+            for (File f : WallpaperRotation.images(new File(dir, ThemeFiles.WALLPAPERS))) {
+                scenes.add(new TrendingPosters.Item(f, "", ""));
+            }
+        }
+        return scenes;
+    }
+
     private void showHero(int position, float dockTopInRoot) {
-        String label = adapter.labelAt(position);
+        String label = heroLabel(position);
         int color = adapter.ambientColorAt(position);
         float y = dockTopInRoot - 14 * density - 26 * density - hero.getHeight();
         boolean changed = !label.contentEquals(heroName.getText());
@@ -1584,10 +1652,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** The parts that never change: a larger name, the meta line and the dots, the artwork and the scrim. */
     private void setUpCinematicShelf() {
-        heroName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 68f);
-        heroName.setLetterSpacing(-0.025f);
-        heroMeta.setVisibility(View.INVISIBLE);   // keeps its height, so the name does not jump when it fills in
-        heroDots.setVisibility(View.VISIBLE);
+        if (pictureShelf) {
+            // Aerial-style home over the daily pictures: one small line with the title and credit, the synopsis under it.
+            heroName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f);
+            heroName.setEllipsize(TextUtils.TruncateAt.END);
+            heroName.setMaxWidth(Math.round(900 * density));
+            heroOverview.setVisibility(View.INVISIBLE);   // its three lines count from the start, so the shelf clears the dock
+        } else {
+            heroName.setWidth(Math.round(600 * density));
+            heroName.setHeight(Math.round(90 * density));
+            heroName.setAutoSizeTextTypeUniformWithConfiguration(24, 68, 2, TypedValue.COMPLEX_UNIT_SP);
+            heroName.setEllipsize(TextUtils.TruncateAt.END);
+            heroName.setLetterSpacing(-0.025f);
+            heroMeta.setVisibility(View.INVISIBLE);   // keeps its height, so the name does not jump when it fills in
+            heroDots.setVisibility(View.VISIBLE);
+        }
         heroArt.setVisibility(View.VISIBLE);
         // One stretched bitmap: apply its alpha while drawing instead of through an offscreen buffer.
         heroArt.forceHasOverlappingRendering(false);
@@ -1620,38 +1699,84 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Swaps the backdrop to this app's artwork: fade out, swap, fade in, the way the shelf's name changes. */
     private void showHeroArt(int position) {
-        String key = adapter.keyAt(position);
-        if (key == null) return;
+        String appKey = adapter.keyAt(position);
+        if (appKey == null) return;
+        HeroPosters.Source poster = heroPosters == null ? null : heroPosters.sourceFor(adapter.packageAt(position), position);
+        // Dock apps that share one picture (Bing's) keep it in place instead of fading it out and in again.
+        String key = poster != null ? poster.file.getPath() : appKey;
         heroArt.animate().cancel();
         if (key.equals(heroArtKey)) {
             fadeHeroArt(420);
             return;
         }
+        heroArtKey = key;
+        if (poster != null) {
+            heroPosters.load(poster, picture -> {
+                if (!key.equals(heroArtKey)) return;   // focus moved on while it decoded
+                if (picture == null) {
+                    swapHeroArt(softHeroArt(appKey, position), false);
+                    return;
+                }
+                swapHeroArt(picture, true);
+            });
+            return;
+        }
+        swapHeroArt(softHeroArt(key, position), false);
+    }
+
+    /** A day's new trending pictures arrived: show the one for the focused dock app. */
+    private void onTrendingUpdated() {
+        if (isDestroyed() || heroPosters == null) return;
+        heroPosters.setTrending(dailyPictures());
+        heroArtKey = null;
+        if (cinematic && heroShown && lastFocused < adapter.dockFilled()) {
+            heroName.setText(heroLabel(lastFocused));
+            updateHeroMeta(lastFocused);
+            showHeroArt(lastFocused);
+        }
+    }
+
+    private Bitmap softHeroArt(String key, int position) {
         Bitmap art = heroArtCache.get(key);
         if (art == null) {
             art = HeroArt.from(adapter.artworkAt(position));
             if (art != null) heroArtCache.put(key, art);
         }
-        heroArtKey = key;
-        final Bitmap next = art;
+        return art;
+    }
+
+    /** sharp: a hero_posters picture, cropped to fill the screen; otherwise the softened artwork, stretched. */
+    private void swapHeroArt(Bitmap next, boolean sharp) {
+        ImageView.ScaleType type = sharp ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_XY;
+        heroArtAlpha = sharp ? HERO_POSTER_ALPHA : HERO_ART_ALPHA;
         if (!animations || reducedMotion || heroArt.getAlpha() == 0f) {
+            heroArt.setScaleType(type);
             heroArt.setImageBitmap(next);
             fadeHeroArt(600);
             return;
         }
         heroArt.animate().alpha(0f).setDuration(140).withEndAction(() -> {
+            heroArt.setScaleType(type);
             heroArt.setImageBitmap(next);
-            heroArt.animate().alpha(HERO_ART_ALPHA).setDuration(420).start();
+            heroArt.animate().alpha(heroArtAlpha).setDuration(420).start();
         }).start();
     }
 
     private void fadeHeroArt(int ms) {
-        if (!animations) heroArt.setAlpha(HERO_ART_ALPHA);
-        else heroArt.animate().alpha(HERO_ART_ALPHA).setDuration(reducedMotion ? Math.min(ms, Motion.REDUCED_MS) : ms).start();
+        if (!animations) heroArt.setAlpha(heroArtAlpha);
+        else heroArt.animate().alpha(heroArtAlpha).setDuration(reducedMotion ? Math.min(ms, Motion.REDUCED_MS) : ms).start();
     }
 
     /** "Last opened yesterday, 9:40 PM", the time in white; nothing (but the same height) when it was never seen. */
     private void updateHeroMeta(int position) {
+        if (pictureShelf) {
+            // The title and credit are the line above; under it, the picture's synopsis.
+            HeroPosters.Source poster = heroPosters.sourceFor(adapter.packageAt(position), position);
+            String overview = poster == null ? "" : poster.overview;
+            heroOverview.setText(overview);
+            heroOverview.setVisibility(overview.isEmpty() ? View.INVISIBLE : View.VISIBLE);
+            return;
+        }
         long when = LastOpened.get(this, adapter.packageAt(position));
         if (when <= 0) {
             heroMeta.setVisibility(View.INVISIBLE);
@@ -1668,6 +1793,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** One dot per dock app, the focused one drawn long and white. Hebrew docks start on the right, so do the dots. */
     private void updateHeroDots(int position) {
+        if (pictureShelf) return;
         int count = Math.min(adapter.dockFilled(), COLUMNS);
         heroDots.setVisibility(count > 1 ? View.VISIBLE : View.INVISIBLE);
         if (heroDots.getChildCount() != count) {
@@ -2060,10 +2186,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         hideHero();
     }
 
-    /** The first top-bar button after Inputs that is shown: the network pill, Reorder, then Settings (always there). */
+    /** The first visible button after Inputs, in the top bar's logical order. */
     private View firstTopButton() {
+        View stockHome = findViewById(R.id.btnStockHome);
+        if (stockHome.getVisibility() == View.VISIBLE) return stockHome;
         if (btnWifi.getVisibility() == View.VISIBLE) return btnWifi;
         if (btnReorder.getVisibility() == View.VISIBLE) return btnReorder;
+        if (btnLibraryTop.getVisibility() == View.VISIBLE) return btnLibraryTop;
         return findViewById(R.id.btnSettings);
     }
 
@@ -2529,13 +2658,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
-    /** `input_sources` in config.xml: "HW5=23" maps the framework input whose id ends in /HW5 to a vendor
+    /** `input_sources` in config.xml or the theme: "HW5=23" maps the framework input whose id ends in /HW5 to a vendor
      *  source number; "HW8=-" leaves that input out of the Inputs menu (a port the board reports but the set
      *  does not have). Returns the number, -1 for a left-out input, or null when the input is not listed. */
     private Integer mappedSource(String inputId) {
         if (inputId == null) return null;
         String hw = inputId.substring(inputId.lastIndexOf('/') + 1);
-        for (String m : getResources().getStringArray(R.array.input_sources)) {
+        for (String m : inputSources) {
             int eq = m.indexOf('=');
             if (eq <= 0 || !m.substring(0, eq).trim().equals(hw)) continue;
             String v = m.substring(eq + 1).trim();

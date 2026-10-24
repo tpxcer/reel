@@ -10,6 +10,8 @@ backup/
 # session screenshots and working notes (may show the Wi-Fi name or account avatar) stay local
 shots/
 work/
+# a TMDB API key or read token, wherever it is saved; it never belongs in the repo
+tmdb_key.txt
 # Perfetto traces from tools/trace.py: large, and they hold the TV's process list
 traces/
 .DS_Store

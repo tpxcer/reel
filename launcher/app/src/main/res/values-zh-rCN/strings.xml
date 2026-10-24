@@ -63,4 +63,26 @@
         <item quantity="other">%1$d 个应用</item>
     </plurals>
     <string name="greeting_with_name">%1$s，%2$s</string>
+    <string name="stock_home">原厂桌面</string>
+    <string name="trending_title_line">%1$s · 图片来自 TMDB</string>
+    <string name="trending_credit">本周热门 · 图片来自 TMDB</string>
+    <string name="bing_title_line">%1$s · 必应每日一图</string>
+    <string name="backdrop_label">背景</string>
+    <string name="backdrop_state">背景：%1$s</string>
+    <string name="backdrop_theme_default">跟随主题</string>
+    <string name="backdrop_tmdb">TMDB 热门剧照</string>
+    <string name="backdrop_bing">必应每日一图</string>
+    <string name="backdrop_scenes">场景壁纸</string>
+    <string name="backdrop_posters">我的海报</string>
+    <string name="tmdb_key_label">TMDB API 密钥</string>
+    <string name="tmdb_key_state">TMDB API 密钥：%1$s</string>
+    <string name="tmdb_key_missing">未填写</string>
+    <string name="tmdb_key_set">已填写</string>
+    <string name="tmdb_key_set_status">已填写 · 上次取图 %1$s</string>
+    <string name="tmdb_key_help">TMDB 剧照需要你自己的密钥：在 themoviedb.org 免费注册，到 设置 → API 复制 API Key（32 位）或 API 读访问令牌，输入后按键盘上的回车键（↵）。密钥只保存在这台电视上。</string>
+    <string name="tmdb_key_hint">API Key 或读访问令牌</string>
+    <string name="tmdb_key_save">保存</string>
+    <string name="tmdb_key_clear">清除</string>
+    <string name="tmdb_key_invalid">这不是 TMDB 的 API Key 或读访问令牌，请检查后再试。</string>
+    <string name="tmdb_notice">本产品使用 TMDB API，但未获 TMDB 认可或认证。</string>
 </resources>

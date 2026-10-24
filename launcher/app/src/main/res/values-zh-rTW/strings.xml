@@ -87,4 +87,26 @@
         <item quantity="other">%1$d 個應用程式</item>
     </plurals>
     <string name="greeting_with_name">%1$s，%2$s</string>
+    <string name="stock_home">原廠桌面</string>
+    <string name="trending_title_line">%1$s · 圖片來自 TMDB</string>
+    <string name="trending_credit">本週熱門 · 圖片來自 TMDB</string>
+    <string name="bing_title_line">%1$s · Bing 每日一圖</string>
+    <string name="backdrop_label">背景</string>
+    <string name="backdrop_state">背景：%1$s</string>
+    <string name="backdrop_theme_default">跟隨主題</string>
+    <string name="backdrop_tmdb">TMDB 熱門劇照</string>
+    <string name="backdrop_bing">Bing 每日一圖</string>
+    <string name="backdrop_scenes">場景桌布</string>
+    <string name="backdrop_posters">我的海報</string>
+    <string name="tmdb_key_label">TMDB API 金鑰</string>
+    <string name="tmdb_key_state">TMDB API 金鑰：%1$s</string>
+    <string name="tmdb_key_missing">未填寫</string>
+    <string name="tmdb_key_set">已填寫</string>
+    <string name="tmdb_key_set_status">已填寫 · 上次取圖 %1$s</string>
+    <string name="tmdb_key_help">TMDB 劇照需要你自己的金鑰：在 themoviedb.org 免費註冊，到 設定 → API 複製 API Key（32 位）或 API 讀取存取權杖，輸入後按鍵盤上的 Enter 鍵（↵）。金鑰只保存在這台電視上。</string>
+    <string name="tmdb_key_hint">API Key 或讀取存取權杖</string>
+    <string name="tmdb_key_save">儲存</string>
+    <string name="tmdb_key_clear">清除</string>
+    <string name="tmdb_key_invalid">這不是 TMDB 的 API Key 或讀取存取權杖，請檢查後再試。</string>
+    <string name="tmdb_notice">本產品使用 TMDB API，但未獲 TMDB 認可或認證。</string>
 </resources>

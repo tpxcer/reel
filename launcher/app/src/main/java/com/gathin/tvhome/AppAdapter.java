@@ -195,6 +195,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final boolean showLibrary;
     /** Packages with a leanback entry at the last reload(): their tiles launch with the leanback category. */
     private Set<String> leanbackPackages = new HashSet<>();
+    /** Activities that are also an app's phone-style LAUNCHER entry, at the last reload(). */
+    private Set<ComponentName> launcherEntries = new HashSet<>();
     private final boolean showHomeSettings;
     /** Calmer motion for weak GPUs (config.xml, reduced_motion): no overshoot, shorter fades. */
     private final boolean reducedMotion;
@@ -247,12 +249,18 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Set<String> tvPackages = new HashSet<>();
         for (ResolveInfo ri : found) if (ri.activityInfo != null) tvPackages.add(ri.activityInfo.packageName);
         leanbackPackages = tvPackages;
+        List<ResolveInfo> launchers = pm.queryIntentActivities(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0);
+        Set<ComponentName> entries = new HashSet<>();
+        for (ResolveInfo ri : launchers) {
+            if (ri.activityInfo != null) entries.add(new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name));
+        }
+        launcherEntries = entries;
         Set<String> added = LibraryApps.load(ctx);
         Set<String> removed = LibraryApps.loadRemoved(ctx);
         if (!added.isEmpty()) {
             Set<String> seen = new HashSet<>(tvPackages);
-            for (ResolveInfo ri : pm.queryIntentActivities(
-                    new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)) {
+            for (ResolveInfo ri : launchers) {
                 if (ri.activityInfo != null && added.contains(ri.activityInfo.packageName)
                         && seen.add(ri.activityInfo.packageName)) found.add(ri);
             }
@@ -472,9 +480,12 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Intent i = new Intent(Intent.ACTION_MAIN)
                 .setComponent(e.component)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        // TV apps launch with the same leanback intent as from the stock launcher or the remote, so an app
-        // already running resumes instead of restarting; only phone apps added from the library use plain MAIN.
-        if (leanbackPackages.contains(e.pkg)) i.addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
+        // Launch with the intent the TV's own launcher sends, so an app already running resumes instead of
+        // restarting: Android stacks a second start screen on a task started with another category, and some apps
+        // (Kekeys) then clear their task. Xiaomi's launcher sends the LAUNCHER category for an activity that has
+        // it (phone apps added from the library included); TV-only apps keep the leanback one.
+        if (launcherEntries.contains(e.component)) i.addCategory(Intent.CATEGORY_LAUNCHER);
+        else if (leanbackPackages.contains(e.pkg)) i.addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
         String action = launchActions.get(e.pkg);
         if (action != null) {
             // NEW_TASK only: with RESET_TASK_IF_NEEDED, Android just brings a running task of the app to the front
