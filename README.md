@@ -23,7 +23,7 @@
 
 ```sh
 adb connect <电视 IP>:5555
-adb install -r Reel-TV-v0.2.0.apk
+adb install -r Reel-TV-v0.3.0.apk
 # 小米专用配置（见下方「小米/红米电视的配置」），放进桌面的主题目录
 adb shell mkdir -p /sdcard/Android/data/io.github.tpxcer.reel/files
 adb push config.json /sdcard/Android/data/io.github.tpxcer.reel/files/config.json
@@ -44,6 +44,7 @@ adb shell am start -n io.github.tpxcer.reel/.MainActivity
 - **不要**禁用原厂桌面 `com.mitv.tvhome`，也不要用 `set-home-activity` 把 Reel TV 设为默认桌面：这版固件不允许第三方默认桌面，会弹出空的选择器。
 - 用真实遥控器试 Home、长按音量和小爱；ADB 注入的按键不算数。用完关闭 ADB 调试。
 - 主题（`config.json`、壁纸、海报）也可以用 `tools/theme.sh themes/<名字>` 推送，见 [themes/README.md](themes/README.md)。
+- **以后更新**：长按右上角设置齿轮 →「简洁桌面设置」→ 最下面「检查更新」。有新正式版时下载、核对 SHA-256，再弹出系统安装确认，按「安装」即可；设置和 TMDB 密钥都会保留。只有从 Releases 安装的正式版能这样更新，自己编译的版本请重新安装。
 - 卸载：`adb uninstall io.github.tpxcer.reel`，系统会移除它的辅助服务和通知监听，Home 回到原厂桌面。**语音位不会自动清掉**（MiTV-ASTP0 实测），卸载后执行 `adb shell settings put secure voice_interaction_service ""`，或改回安装前的值。
 
 ## TMDB 密钥（必须自己申请）
@@ -94,7 +95,8 @@ TMDB 要求署名：界面每张图都标注「图片来自 TMDB」，设置页�
 
 | 权限或做法 | 用途 | 怎么撤销 |
 |---|---|---|
-| `INTERNET` | 只用于上面的取图：填了 TMDB 密钥时访问 `api.tmdb.org`、`image.tmdb.org`，选了必应时访问 `cn.bing.com`，每天最多一次，不收集任何数据 | 不开 `trending_posters`、不选必应即不联网 |
+| `INTERNET` | 取图：填了 TMDB 密钥时访问 `api.tmdb.org`、`image.tmdb.org`，选了必应时访问 `cn.bing.com`，每天最多一次。检查更新：只在你点「检查更新」时访问 `api.github.com` 和 GitHub 的下载地址。不收集任何数据 | 不开 `trending_posters`、不选必应、不点检查更新即不联网 |
+| `REQUEST_INSTALL_PACKAGES` | 「检查更新」下载的新版交给系统安装器，由你按「安装」确认 | 不点检查更新就不会用到 |
 | 辅助服务 `HomeKeyService`（读取前台窗口） | 看到原厂桌面出现就切回本桌面；只判断前台窗口属于哪个应用 | 系统设置 → 无障碍中关闭 |
 | `WRITE_SECURE_SETTINGS`（安装时用 ADB 授予） | 小米待机会强停所有第三方应用，之后把辅助服务和语音位补回去 | `pm revoke io.github.tpxcer.reel android.permission.WRITE_SECURE_SETTINGS` |
 | 通知监听 `HelperKeeper`（不读任何通知） | 待机强停后系统会立即重新绑定它，借此触发补回 | `cmd notification disallow_listener io.github.tpxcer.reel/.HelperKeeper` |

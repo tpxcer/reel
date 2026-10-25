@@ -159,6 +159,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean pictureShelf;
     private String backdrop = "";
     private boolean fetchTrending;
+    /** dock_opacity in percent; on the cinematic shelf it also lightens the scrim behind the dock. */
+    private int dockOpacity = 100;
     /** Softened artwork per app (HeroArt, about 5 KB each), made the first time its dock tile is focused. */
     private final Map<String, Bitmap> heroArtCache = new HashMap<>();
     /** The app whose artwork heroArt shows, so focusing it again only fades it back in. */
@@ -424,6 +426,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             heroPosters.setTrending(dailyPictures());
         }
         glowStyle = cfg.glowStyle;
+        dockOpacity = cfg.dockOpacity;
         if (cinematic) setUpCinematicShelf();
         // dock_title false: the name above the dock (and the cinematic lines under it) never shows; the glow
         // still follows the dock.
@@ -1688,9 +1691,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         paint.setShader(new LinearGradient(rtl ? w : 0, 0, rtl ? 0 : w, 0,
                 new int[]{0xD1060406, 0x59060406, 0x00060406}, new float[]{0f, 0.42f, 0.7f}, Shader.TileMode.CLAMP));
         canvas.drawRect(0, 0, w, h, paint);
+        // The lower part darkens for the dock; a lower dock_opacity lets the artwork show through behind it.
+        int mid = Math.round(0xDB * dockOpacity / 100f), low = Math.round(0xFF * dockOpacity / 100f);
         paint.setShader(new LinearGradient(0, 0, 0, h,
-                new int[]{0x00060406, 0x00060406, 0xDB060406, 0xFF060406}, new float[]{0f, 0.28f, 0.58f, 0.76f},
-                Shader.TileMode.CLAMP));
+                new int[]{0x00060406, 0x00060406, (mid << 24) | 0x060406, (low << 24) | 0x060406},
+                new float[]{0f, 0.28f, 0.58f, 0.76f}, Shader.TileMode.CLAMP));
         canvas.drawRect(0, 0, w, h, paint);
         BitmapDrawable scrim = new BitmapDrawable(getResources(), bmp);
         scrim.setGravity(Gravity.FILL);

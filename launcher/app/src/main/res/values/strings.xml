@@ -171,4 +171,17 @@
     <string name="tmdb_key_clear">Clear</string>
     <string name="tmdb_key_invalid">That is not a TMDB API Key or Read Access Token. Check it and try again.</string>
     <string name="tmdb_notice">This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
+    <!-- Launcher settings > Check for updates (Updater): only when chosen, from GitHub Releases. -->
+    <string name="update_title">Check for updates</string>
+    <string name="update_check">Check for updates · version %1$s</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_latest">Reel TV %1$s is the latest version.</string>
+    <string name="update_found_title">Reel TV %1$s is available</string>
+    <!-- %1$s is the installed version, %2$s the download size, e.g. "512 kB". -->
+    <string name="update_found_body">You have %1$s. The download is %2$s; it is checked against its SHA-256 and then handed to the TV\'s installer, where you confirm with Install.</string>
+    <string name="update_install">Download and install</string>
+    <string name="update_downloading">Downloading the update…</string>
+    <string name="update_failed">Update failed: %1$s</string>
+    <string name="update_not_official">Only Reel TV installed from GitHub Releases can update itself on the TV; this build was installed another way.</string>
+    <string name="update_bad_checksum">the download does not match its SHA-256, so nothing was installed</string>
 </resources>

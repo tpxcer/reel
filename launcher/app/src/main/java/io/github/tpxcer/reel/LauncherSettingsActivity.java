@@ -3,11 +3,13 @@ package io.github.tpxcer.reel;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.InputType;
+import android.text.format.Formatter;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -19,6 +21,8 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** Remote-friendly settings owned by the launcher; system settings stay one row away. */
 public final class LauncherSettingsActivity extends Activity {
@@ -31,6 +35,7 @@ public final class LauncherSettingsActivity extends Activity {
     private TextView wallpaperChoice;
     private TextView backdropChoice;
     private TextView tmdbKeyChoice;
+    private final ExecutorService updates = Executors.newSingleThreadExecutor();
     private static final int[] BACKDROP_LABELS = {R.string.backdrop_tmdb, R.string.backdrop_bing,
             R.string.backdrop_scenes, R.string.backdrop_posters};
     private TextView animationsChoice;
@@ -153,6 +158,9 @@ public final class LauncherSettingsActivity extends Activity {
         });
         findViewById(R.id.tvSettingsChoice).setOnClickListener(v ->
                 open(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));
+        TextView updateChoice = findViewById(R.id.updateChoice);
+        updateChoice.setText(getString(R.string.update_check, Updater.currentVersion(this)));
+        updateChoice.setOnClickListener(v -> checkForUpdate());
         refresh();
         if (config.launcherSettingsButton) reorderChoice.requestFocus();
         else columnChoices[Math.max(0, Math.min(columns - 4, 3))].requestFocus();
@@ -333,6 +341,66 @@ public final class LauncherSettingsActivity extends Activity {
                 || choices.contains("animations") || choices.contains("advanced_effects")
                 || choices.contains(Config.WALLPAPER_CHOICE_KEY) || choices.contains(Config.DOCK_OPACITY_KEY)
                 || choices.contains(Config.BACKDROP_CHOICE_KEY);
+    }
+
+    /** Asks GitHub for the latest release only now, when the viewer chose to; nothing checks in the background. */
+    private void checkForUpdate() {
+        if (!Updater.isRelease(this)) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.update_title)
+                    .setMessage(R.string.update_not_official)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+            return;
+        }
+        String current = Updater.currentVersion(this);
+        Toast.makeText(this, R.string.update_checking, Toast.LENGTH_SHORT).show();
+        updates.execute(() -> {
+            try {
+                Updater.Release release = Updater.latest();
+                runOnUiThread(() -> {
+                    if (isFinishing()) return;
+                    if (release == null || !Updater.newer(release.version, current)) {
+                        Toast.makeText(this, getString(R.string.update_latest, current), Toast.LENGTH_LONG).show();
+                    } else {
+                        offerUpdate(release, current);
+                    }
+                });
+            } catch (IOException | RuntimeException failed) {
+                runOnUiThread(() -> updateFailed(failed));
+            }
+        });
+    }
+
+    private void offerUpdate(Updater.Release release, String current) {
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.update_found_title, release.version))
+                .setMessage(getString(R.string.update_found_body, current, Formatter.formatShortFileSize(this, release.size)))
+                .setPositiveButton(R.string.update_install, (d, w) -> {
+                    AlertDialog progress = new AlertDialog.Builder(this)
+                            .setMessage(R.string.update_downloading)
+                            .setCancelable(false)
+                            .show();
+                    Context app = getApplicationContext();
+                    updates.execute(() -> {
+                        try {
+                            Updater.downloadAndInstall(app, release);
+                            runOnUiThread(progress::dismiss);
+                        } catch (IOException | RuntimeException failed) {
+                            runOnUiThread(() -> {
+                                progress.dismiss();
+                                updateFailed(failed);
+                            });
+                        }
+                    });
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void updateFailed(Exception failed) {
+        if (isFinishing()) return;
+        Toast.makeText(this, getString(R.string.update_failed, String.valueOf(failed.getMessage())), Toast.LENGTH_LONG).show();
     }
 
     private void open(Intent intent) {
