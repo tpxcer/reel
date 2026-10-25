@@ -91,7 +91,7 @@ def parse(argv):
     p.add_argument("scenario", choices=["cold", "coldsys", "home", "nav", "custom"])
     p.add_argument("--runs", type=int, default=5, help="how many traces to record (default 5)")
     p.add_argument("--out", default="traces", help="folder for the traces (default traces/)")
-    p.add_argument("--package", default="com.gathin.tvhome", help="the launcher's package (default com.gathin.tvhome)")
+    p.add_argument("--package", default="io.github.tpxcer.reel", help="the launcher's package (default io.github.tpxcer.reel)")
     p.add_argument("--app", metavar="COMPONENT",
                    help="the other app for cold and home, as package/activity (default: found on the TV)")
     p.add_argument("--setup", action="append", default=[], metavar="CMD", help="custom: a setup command")
@@ -179,7 +179,7 @@ def main(argv=None):
     try:
         home = shell("cmd package resolve-activity --brief -a android.intent.action.MAIN "
                      f"-c android.intent.category.HOME {args.package}").strip().splitlines()
-        launcher = home[-1].strip() if home and "/" in home[-1] else f"{args.package}/.MainActivity"
+        launcher = home[-1].strip() if home and "/" in home[-1] else f"{args.package}/com.gathin.tvhome.MainActivity"
         other = args.app
         if args.scenario in ("cold", "home") and not other:
             other = other_app(shell, args.package)

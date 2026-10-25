@@ -2,17 +2,35 @@ plugins {
     id 'com.android.application'
 }
 
+// Reel's published releases: -PreelSigning=<keystore.properties> (storeFile, storePassword, keyAlias, keyPassword),
+// kept outside the repo. Without it the release build keeps the debug key, as before.
+def reelSigning = providers.gradleProperty('reelSigning').orNull
+
 android {
     namespace 'com.gathin.tvhome'
     compileSdk 34
 
     defaultConfig {
         // Opt-in identity for firmware with a package-name HOME allowlist; see docs/devices/xiaomi-mitv-aetp0-dofus.md.
-        applicationId providers.gradleProperty('launcherApplicationId').getOrElse('com.gathin.tvhome')
+        applicationId providers.gradleProperty('launcherApplicationId').getOrElse('io.github.tpxcer.reel')
         minSdk 26
         targetSdk 34
-        versionCode 7
-        versionName '2.6'
+        // Reel 0.1.0; the code stays above upstream's 7 so builds installed under another id still update.
+        versionCode 8
+        versionName '0.1.0'
+    }
+
+    signingConfigs {
+        if (reelSigning) {
+            reel {
+                def props = new Properties()
+                file(reelSigning).withInputStream { props.load(it) }
+                storeFile file(props.getProperty('storeFile'))
+                storePassword props.getProperty('storePassword')
+                keyAlias props.getProperty('keyAlias')
+                keyPassword props.getProperty('keyPassword')
+            }
+        }
     }
 
     buildTypes {
@@ -21,8 +39,8 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Sideloaded over ADB, never published: sign with the debug key so it installs over a debug build.
-            signingConfig signingConfigs.debug
+            // Sideloaded over ADB: the debug key, so it installs over a debug build; Reel's releases use reelSigning.
+            signingConfig reelSigning ? signingConfigs.reel : signingConfigs.debug
         }
     }
 

@@ -9,7 +9,7 @@ import android.service.notification.NotificationListenerService;
  * only runs ServiceRepair when it connects; it never reads a notification.
  *
  * Enable over adb:
- *   cmd notification allow_listener com.gathin.tvhome/.HelperKeeper
+ *   cmd notification allow_listener io.github.tpxcer.reel/com.gathin.tvhome.HelperKeeper
  */
 public class HelperKeeper extends NotificationListenerService {
 

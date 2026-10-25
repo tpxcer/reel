@@ -16,11 +16,40 @@ Reel 是 CleanYourTV 的分叉：一个给小米/红米电视用的简洁桌面�
 - **TMDB 屏保**：小米固件的屏保计时到点时不启动 Android 屏保，而是发广播 `com.duokan.intent.action.show.screensaver`；`home_idle_clock_minutes` 大于 0 时本桌面接收它，用已保存的 TMDB 剧照轮播（片名、简介、署名）。
 - **小米/红米 Home 兼容**：固件不允许第三方默认桌面，Home 由辅助服务接管；另有待机后自动补回服务、语音交互位豁免、顶栏「原厂桌面」入口。见下方「权限与风险」。
 - **打开应用的方式**：有标准桌面入口（LAUNCHER）的应用按该入口启动，回到它时接着原来的页面，不会重开启动页。
+- **包名** `io.github.tpxcer.reel`（Java 类名仍是 `com.gathin.tvhome.*`），可以和上游版本同时安装。组件要写全，例如 `io.github.tpxcer.reel/com.gathin.tvhome.MainActivity`。上游的故障排查、`examples/` 和 `docs/devices/` 里的 `com.gathin.tvhome` 是上游的包名，照做时换成 `io.github.tpxcer.reel`，短写的 `.HomeKeyService` 要写全为 `com.gathin.tvhome.HomeKeyService`。
 - APK 比上游的 480 KB 体积上限大，本仓库 CI 的体积门槛为 512 KB；上游给自己仓库审 PR 的 maintainer-bot 工作流不随本仓库发布。
 
 ## 已测试设备
 
 只在 **Redmi MiTV-ASTP0（Android 9 / SDK 28，固件 25.6.6.OS2.0.19.0.PSTAATV）** 上实测。其他型号未测试，请先按上游流程备份。
+
+## 安装 Release 版（小米/红米）
+
+在电视上打开 ADB 调试（小米：设置 → 账号与安全 → ADB 调试），电脑上用 `adb`（或本仓库的 `tools/tv.py`）：
+
+```sh
+adb connect <电视 IP>:5555
+adb install -r Reel-v0.1.0.apk
+# 小米专用配置（见下方「小米/红米电视的配置」），放进桌面的主题目录
+adb shell mkdir -p /sdcard/Android/data/io.github.tpxcer.reel/files
+adb push config.json /sdcard/Android/data/io.github.tpxcer.reel/files/config.json
+# 待机后自动补回服务所需的权限
+adb shell pm grant io.github.tpxcer.reel android.permission.WRITE_SECURE_SETTINGS
+# Home 键接管：先看现有辅助服务（小爱等），再把 HomeKeyService 加在后面
+adb shell settings get secure enabled_accessibility_services
+adb shell settings put secure enabled_accessibility_services '<上一步的输出>:io.github.tpxcer.reel/com.gathin.tvhome.HomeKeyService'
+adb shell settings put secure accessibility_enabled 1
+# 待机强停后自动补回服务
+adb shell cmd notification allow_listener io.github.tpxcer.reel/com.gathin.tvhome.HelperKeeper
+# 只有下面这条输出为空或 null 时，才占用语音交互位（让 Home 立刻生效，不影响小爱）
+adb shell settings get secure voice_interaction_service
+adb shell settings put secure voice_interaction_service io.github.tpxcer.reel/com.gathin.tvhome.HomeVoiceService
+adb shell am start -n io.github.tpxcer.reel/com.gathin.tvhome.MainActivity
+```
+
+- **不要**禁用原厂桌面 `com.mitv.tvhome`，也不要用 `set-home-activity` 把 Reel 设为默认桌面：这版固件不允许第三方默认桌面，会弹出空的选择器。上游的 `launcher/build-and-install.sh` 面向能设第三方默认桌面的电视，小米/红米请用上面的手动步骤。
+- 用真实遥控器试 Home、长按音量和小爱；ADB 注入的按键不算数。用完关闭 ADB 调试。
+- 卸载：`adb uninstall io.github.tpxcer.reel`，系统会移除它的辅助服务，Home 回到原厂桌面。语音位一般也会被系统清掉，可以用 `adb shell settings get secure voice_interaction_service` 确认；还留着就改回安装前的值。
 
 ## TMDB 密钥（必须自己申请）
 
@@ -78,14 +107,14 @@ TMDB 要求署名：界面每张图都标注「图片来自 TMDB」，设置页�
 
 ## 构建
 
-与上游相同（JDK 17、Android SDK 34），可用 `launcherApplicationId` 换一个包名，避免与上游版本冲突：
+与上游相同（JDK 17、Android SDK 34）。默认包名 `io.github.tpxcer.reel`，可用 `launcherApplicationId` 换成别的：
 
 ```sh
 cd launcher
-./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease -PlauncherApplicationId=<你的包名>
+./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease
 ```
 
-发布构建默认用调试签名（上游只面向 ADB 自装）。要在 GitHub Releases 提供 APK，请换成你自己的发布签名，签名文件不要放进仓库，并公布 APK 的 SHA-256。
+自己构建的版本用调试签名。Releases 里的 APK 用 Reel 的发布密钥签名（`-PreelSigning=<keystore.properties>`，密钥不在仓库里），所以自己构建的版本不能直接覆盖安装 Release 版，需要先卸载。每个 Release 都附 APK 的 SHA-256。
 
 ## 许可
 

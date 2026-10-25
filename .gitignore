@@ -12,6 +12,10 @@ shots/
 work/
 # a TMDB API key or read token, wherever it is saved; it never belongs in the repo
 tmdb_key.txt
+# Reel's release signing key and its passwords live outside the repo
+*.jks
+*.keystore
+keystore.properties
 # Perfetto traces from tools/trace.py: large, and they hold the TV's process list
 traces/
 .DS_Store

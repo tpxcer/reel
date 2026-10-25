@@ -17,7 +17,7 @@ if ($Theme) { $Theme = (Resolve-Path $Theme).Path }
 Set-Location $PSScriptRoot
 $py = 'venv\Scripts\python.exe'
 if (-not (Test-Path $py)) { throw 'run: python -m venv tools\venv; tools\venv\Scripts\python.exe -m pip install -r tools\requirements.txt' }
-$pkg = 'com.gathin.tvhome'
+$pkg = 'io.github.tpxcer.reel'
 $dir = "/sdcard/Android/data/$pkg/files"
 $revision = [guid]::NewGuid().ToString('N')
 # Restart Home so it rereads the theme. Android drops a force-stopped app's accessibility services from the
@@ -28,7 +28,7 @@ $revision = [guid]::NewGuid().ToString('N')
 # the list back and switch accessibility on again. When the launcher is already Home it comes back through the Home
 # intent, since `am start -n` from the shell leaves a second MainActivity behind the Home one; before the handover
 # it is started by name as before.
-$restart = "a=`$(settings get secure enabled_accessibility_services); am force-stop $pkg; case `"`$(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME | tail -n 1)`" in $pkg/*) am start -a android.intent.action.MAIN -c android.intent.category.HOME >/dev/null ;; *) am start -n $pkg/.MainActivity >/dev/null ;; esac; case `"`$a`" in *$pkg*) sleep 1; settings put secure enabled_accessibility_services ''; settings put secure accessibility_enabled 0; sleep 1; settings put secure enabled_accessibility_services `"`$a`"; settings put secure accessibility_enabled 1 ;; esac"
+$restart = "a=`$(settings get secure enabled_accessibility_services); am force-stop $pkg; case `"`$(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME | tail -n 1)`" in $pkg/*) am start -a android.intent.action.MAIN -c android.intent.category.HOME >/dev/null ;; *) am start -n $pkg/com.gathin.tvhome.MainActivity >/dev/null ;; esac; case `"`$a`" in *$pkg*) sleep 1; settings put secure enabled_accessibility_services ''; settings put secure accessibility_enabled 0; sleep 1; settings put secure enabled_accessibility_services `"`$a`"; settings put secure accessibility_enabled 1 ;; esac"
 
 # Some firmware (TCL G07, Android 11) locks the shell out of Android/data. Files are staged in
 # /data/local/tmp and copied in, or written through the launcher's ThemeProvider when that is refused.

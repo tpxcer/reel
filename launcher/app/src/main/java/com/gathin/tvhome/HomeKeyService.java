@@ -34,7 +34,7 @@ import java.util.Set;
  * that launcher on again after it was disabled (XGIMI's xrmservice does, on its own remote keys).
  *
  * Enable over adb:
- *   settings put secure enabled_accessibility_services com.gathin.tvhome/.HomeKeyService
+ *   settings put secure enabled_accessibility_services io.github.tpxcer.reel/com.gathin.tvhome.HomeKeyService
  *   settings put secure accessibility_enabled 1
  */
 public class HomeKeyService extends AccessibilityService {

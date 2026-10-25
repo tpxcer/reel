@@ -24,7 +24,7 @@ spec = importlib.util.spec_from_file_location("cyt_trace_report", ROOT / "tools"
 report = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(report)
 
-PKG = "com.gathin.tvhome"
+PKG = "io.github.tpxcer.reel"
 MS = 1_000_000
 
 
@@ -38,9 +38,9 @@ def fake_trace(cold=False, frames=(), draws=(), missed=1, gpu=()):
         create table thread_track (id integer, utid integer);
         create table slice (id integer primary key, ts integer, dur integer, name text, track_id integer);
         create table actual_frame_timeline_slice (ts integer, dur integer, upid integer, jank_type text);
-        insert into process values (1, 90, 'com.gathin.tvhome'), (2, 100, 'com.gathin.tvhome'), (3, 200, 'other');
-        insert into thread values (1, 2, 100, 'com.gathin.tvhome'), (2, 2, 101, 'RenderThread'),
-                                  (3, 1, 90, 'com.gathin.tvhome');
+        insert into process values (1, 90, 'io.github.tpxcer.reel'), (2, 100, 'io.github.tpxcer.reel'), (3, 200, 'other');
+        insert into thread values (1, 2, 100, 'io.github.tpxcer.reel'), (2, 2, 101, 'RenderThread'),
+                                  (3, 1, 90, 'io.github.tpxcer.reel');
         insert into thread_track values (10, 1), (20, 2), (30, 3);
     """)
     main = [("performStart:com.gathin.tvhome.MainActivity", 1000, 5), ("activityResume", 1005, 30),

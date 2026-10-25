@@ -1,4 +1,22 @@
-> **Reel（剧照桌面）**：CleanYourTV 的分叉，给小米/红米电视用的简洁桌面，首页与屏保是每日影视剧照。与上游的区别、TMDB 密钥和小米配置见 [docs/FORK.md](docs/FORK.md)。下文为上游 CleanYourTV 的说明。
+# Reel（剧照桌面）
+
+> English: Reel is a clean home screen for Xiaomi/Redmi Android TVs, based on [CleanYourTV](https://github.com/Gathin23/cleanyourtv). Home and the screensaver show this week's film and series stills from TMDB (with your own free TMDB key), Bing's image of the day or your own pictures. No root, nothing uninstalled. Tested on one TV so far.
+
+给小米/红米电视用的简洁桌面，基于 CleanYourTV。
+
+- **首页**：全屏剧照，左上小时钟和日期，底栏上方一行「片名 · 来源」加三行简介。
+- **背景来源**在电视上切换：TMDB 本周热门剧照、必应每日一图、场景壁纸、自己的海报。
+- **屏保**：电视屏保时间到时轮播 TMDB 剧照，带片名和简介。
+- **不 root、不卸载任何东西**：小米固件不允许第三方默认桌面，Reel 用辅助服务接管 Home 键，长按音量不受影响。
+- **TMDB 用你自己的免费密钥**，在电视上填写；软件里不内置任何人的密钥。
+
+**下载**：[Releases](https://github.com/tpxcer/reel/releases)　**安装与配置**：[docs/FORK.md](docs/FORK.md)
+
+目前只在 Redmi MiTV-ASTP0（Android 9）上实测，其他型号请先按上游流程备份。
+
+Reel 以 MIT 协议发布，基于 Gathin 的 CleanYourTV（Copyright (c) 2026 Gathin），上游的工具、规则和安全约束沿用。以下为上游 CleanYourTV 的原始说明。
+
+---
 
 <p align="center">
   <a href="https://cleanyour.tv"><img src="https://raw.githubusercontent.com/Gathin23/cleanyourtv/main/docs/banner.png" alt="CleanYourTV. Your TV, minus the ads. Strip the bloatware from any Android TV or Google TV over Wi-Fi and replace the ad-filled home screen with a clean launcher that looks like an Apple TV. No root, no cable, nothing uninstalled, and a one-line restore." width="800"></a>
@@ -510,7 +528,7 @@ and a wallpaper.
 English, German, Spanish, Catalan, French, Russian, Serbian (Latin), Polish, Czech, Italian, Portuguese,
 Turkish, Arabic, Hebrew, Simplified Chinese, Traditional Chinese (Taiwan), Thai, Finnish, Vietnamese,
 Bangla, Indonesian, Norwegian Bokmål, Dutch, Uzbek (Latin) and Ukrainian. The launcher follows the TV's language. Android 13+ can set it for the launcher
-alone: `tools/tv.py 'cmd locale set-app-locales com.gathin.tvhome --locales ca'`.
+alone: `tools/tv.py 'cmd locale set-app-locales io.github.tpxcer.reel --locales ca'`.
 
 Hebrew mirrors the layout: menu buttons on the left, date and clock on the right with the greeting above,
 dock and app rows starting on the right with matching remote navigation, the input selector's icons and
@@ -536,7 +554,7 @@ contract: [`docs/specs/card.md`](docs/specs/card.md).
 Pick "Clock" in the TV's screensaver settings, or over ADB:
 
 ```bash
-tools/tv.py 'settings put secure screensaver_components com.gathin.tvhome/.ClockDream; settings put secure screensaver_enabled 1'
+tools/tv.py 'settings put secure screensaver_components io.github.tpxcer.reel/com.gathin.tvhome.ClockDream; settings put secure screensaver_enabled 1'
 ```
 
 </details>

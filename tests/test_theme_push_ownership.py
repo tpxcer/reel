@@ -21,7 +21,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / "tools"
-DEVICE_DIR = "/sdcard/Android/data/com.gathin.tvhome/files"
+DEVICE_DIR = "/sdcard/Android/data/io.github.tpxcer.reel/files"
 STAGE = "/data/local/tmp/cyt-theme"
 
 # --push copies like tv.py does; shell commands run on this machine after the device paths are rewritten.
@@ -34,7 +34,7 @@ import sys
 LOG = os.environ["FAKE_LOG"]
 DIR = os.environ["FAKE_DIR"]
 TMP = os.environ["FAKE_STAGE"]
-DEVICE_DIR = "/sdcard/Android/data/com.gathin.tvhome/files"
+DEVICE_DIR = "/sdcard/Android/data/io.github.tpxcer.reel/files"
 
 
 def local(command):
@@ -68,7 +68,7 @@ else:
     Device().shell(" ".join(args))
 '''
 
-# Stands in for `content write/delete` against content://com.gathin.tvhome.theme, which on a TV runs inside
+# Stands in for `content write/delete` against content://io.github.tpxcer.reel.theme, which on a TV runs inside
 # the launcher's process and so creates files owned by the launcher. FAKE_NO_PROVIDER models firmware or a
 # launcher version without the provider.
 FAKE_CONTENT = r'''#!/usr/bin/env python3
@@ -87,7 +87,7 @@ if os.environ.get("FAKE_NO_CONTENT_WRITE") and args[0] == "write":
     print("[ERROR] Unsupported operation: write")
     sys.exit(0)
 action, uri = args[0], args[args.index("--uri") + 1]
-path = os.path.join(os.environ["FAKE_DIR"], uri.split("com.gathin.tvhome.theme/", 1)[1])
+path = os.path.join(os.environ["FAKE_DIR"], uri.split("io.github.tpxcer.reel.theme/", 1)[1])
 if action == "write":
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as f:
@@ -163,7 +163,7 @@ class ThemePushTest(unittest.TestCase):
                         f"a file the shell owns stops the provider truncating it: {put}")
         self.assertLess(put.index("content write"), put.index("cp "),
                         f"cp creates a shell-owned file on Android 14: {put}")
-        self.assertIn(["write", "--uri", "content://com.gathin.tvhome.theme/config.json"],
+        self.assertIn(["write", "--uri", "content://io.github.tpxcer.reel.theme/config.json"],
                       self.provider_calls())
         self.assertNotIn(f"cp {self.stage}-config.json {DEVICE_DIR}/config.json", " | ".join(self.shell_commands()),
                          "the provider is available, so cp must not run")

@@ -16,7 +16,7 @@ import android.speech.SpeechRecognizer;
  * is empty (`settings get secure voice_interaction_service` prints null), so no assistant is displaced.
  *
  * Enable over adb:
- *   settings put secure voice_interaction_service com.gathin.tvhome/.HomeVoiceService
+ *   settings put secure voice_interaction_service io.github.tpxcer.reel/com.gathin.tvhome.HomeVoiceService
  */
 public class HomeVoiceService extends VoiceInteractionService {
 
