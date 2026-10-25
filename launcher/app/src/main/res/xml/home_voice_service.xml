@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- HomeVoiceService: the voice slot only for the Home redirect's app switch allowance; it offers no assist. -->
 <voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:sessionService="com.gathin.tvhome.HomeVoiceService$Sessions"
-    android:recognitionService="com.gathin.tvhome.HomeVoiceService$Recognizer"
+    android:sessionService="io.github.tpxcer.reel.HomeVoiceService$Sessions"
+    android:recognitionService="io.github.tpxcer.reel.HomeVoiceService$Recognizer"
     android:supportsAssist="false"
     android:supportsLaunchVoiceAssistFromKeyguard="false" />

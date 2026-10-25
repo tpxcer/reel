@@ -28,12 +28,12 @@ def read(relative):
 
 
 CONFIG_XML = read("launcher/app/src/main/res/values/config.xml")
-CONFIG_JAVA = read("launcher/app/src/main/java/com/gathin/tvhome/Config.java")
-REMOTE_KEYS = read("launcher/app/src/main/java/com/gathin/tvhome/RemoteKeys.java")
-HOME_KEY = read("launcher/app/src/main/java/com/gathin/tvhome/HomeKeyService.java")
-INPUT_KEY = read("launcher/app/src/main/java/com/gathin/tvhome/InputKeyService.java")
+CONFIG_JAVA = read("launcher/app/src/main/java/io/github/tpxcer/reel/Config.java")
+REMOTE_KEYS = read("launcher/app/src/main/java/io/github/tpxcer/reel/RemoteKeys.java")
+HOME_KEY = read("launcher/app/src/main/java/io/github/tpxcer/reel/HomeKeyService.java")
+INPUT_KEY = read("launcher/app/src/main/java/io/github/tpxcer/reel/InputKeyService.java")
 THEMES_README = read("themes/README.md")
-TROUBLE = read("docs/TROUBLESHOOTING.md")
+README = read("README.md")
 
 
 class TestKeyFilterWiring(unittest.TestCase):
@@ -69,8 +69,8 @@ class TestKeyFilterWiring(unittest.TestCase):
     def test_docs_mention_the_switch(self):
         self.assertIn('key_filter', THEMES_README,
                       "themes/README.md's config.json table must list key_filter")
-        self.assertIn('key_filter', TROUBLE,
-                      "docs/TROUBLESHOOTING.md must tell a user hitting broken repeat about key_filter")
+        self.assertIn('key_filter', README,
+                      "README.md must tell a user hitting broken repeat about key_filter")
 
 
 if __name__ == "__main__":

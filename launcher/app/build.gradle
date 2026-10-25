@@ -7,17 +7,17 @@ plugins {
 def reelSigning = providers.gradleProperty('reelSigning').orNull
 
 android {
-    namespace 'com.gathin.tvhome'
+    namespace 'io.github.tpxcer.reel'
     compileSdk 34
 
     defaultConfig {
-        // Opt-in identity for firmware with a package-name HOME allowlist; see docs/devices/xiaomi-mitv-aetp0-dofus.md.
+        // -PlauncherApplicationId=<id> builds under another package id, e.g. to keep updating an install made under it.
         applicationId providers.gradleProperty('launcherApplicationId').getOrElse('io.github.tpxcer.reel')
         minSdk 26
         targetSdk 34
-        // Reel TV 0.1.1; the code stays above upstream's 7 so builds installed under another id still update.
-        versionCode 9
-        versionName '0.1.1'
+        // Reel TV 0.2.0; the code stays above upstream's 7 so builds installed under another id still update.
+        versionCode 10
+        versionName '0.2.0'
     }
 
     signingConfigs {
