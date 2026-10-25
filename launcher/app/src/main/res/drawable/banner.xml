@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Reel TV's TV banner: a film reel and the name, amber on a dark slate gradient. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp" android:height="180dp" android:viewportWidth="320" android:viewportHeight="180">
+    <path android:pathData="M0,0 H320 V180 H0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="320" android:endY="180"
+                android:startColor="#FF0F131A" android:endColor="#FF253041" />
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FFF2B13A" android:pathData="M28.00,90.00 a44,44 0 1,0 88.00,0 a44,44 0 1,0 -88.00,0 Z" />
+    <path android:fillColor="#FF141922" android:pathData="M61.00,65.00 a11,11 0 1,0 22.00,0 a11,11 0 1,0 -22.00,0 Z M84.78,82.27 a11,11 0 1,0 22.00,0 a11,11 0 1,0 -22.00,0 Z M75.69,110.23 a11,11 0 1,0 22.00,0 a11,11 0 1,0 -22.00,0 Z M46.31,110.23 a11,11 0 1,0 22.00,0 a11,11 0 1,0 -22.00,0 Z M37.22,82.27 a11,11 0 1,0 22.00,0 a11,11 0 1,0 -22.00,0 Z M66.00,90.00 a6,6 0 1,0 12.00,0 a6,6 0 1,0 -12.00,0 Z" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="6" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M142,108 V72 H155 A10,10 0 0,1 155,92 H142 M152,92 L163,108" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="6" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M169.5,96 H192.5 A11.5,12 0 1,0 189.2,104.6 M197.5,96 H220.5 A11.5,12 0 1,0 217.2,104.6 M230,70 V108" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFF2B13A" android:strokeWidth="6" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M246,72 H272 M259,72 V108 M278,72 L290,108 L302,72" />
+</vector>

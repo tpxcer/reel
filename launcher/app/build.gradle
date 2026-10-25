@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
 }
 
-// Reel's published releases: -PreelSigning=<keystore.properties> (storeFile, storePassword, keyAlias, keyPassword),
+// Reel TV's published releases: -PreelSigning=<keystore.properties> (storeFile, storePassword, keyAlias, keyPassword),
 // kept outside the repo. Without it the release build keeps the debug key, as before.
 def reelSigning = providers.gradleProperty('reelSigning').orNull
 
@@ -15,9 +15,9 @@ android {
         applicationId providers.gradleProperty('launcherApplicationId').getOrElse('io.github.tpxcer.reel')
         minSdk 26
         targetSdk 34
-        // Reel 0.1.0; the code stays above upstream's 7 so builds installed under another id still update.
-        versionCode 8
-        versionName '0.1.0'
+        // Reel TV 0.1.1; the code stays above upstream's 7 so builds installed under another id still update.
+        versionCode 9
+        versionName '0.1.1'
     }
 
     signingConfigs {
@@ -39,7 +39,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Sideloaded over ADB: the debug key, so it installs over a debug build; Reel's releases use reelSigning.
+            // Sideloaded over ADB: the debug key, so it installs over a debug build; Reel TV's releases use reelSigning.
             signingConfig reelSigning ? signingConfigs.reel : signingConfigs.debug
         }
     }

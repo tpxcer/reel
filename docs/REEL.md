@@ -1,10 +1,10 @@
-# Reel（剧照桌面）
+# Reel TV（剧照桌面）
 
-> English: Reel is an independent home screen for Xiaomi/Redmi TVs, built in part on code from
+> English: Reel TV is an independent home screen for Xiaomi/Redmi TVs, built in part on code from
 > [CleanYourTV](https://github.com/Gathin23/cleanyourtv) (MIT). It has an Aerial-style home, optional TMDB / Bing
 > backdrops (network, off by default, your own TMDB key) and a TMDB screensaver.
 
-Reel 是一个独立项目：给小米/红米电视用的简洁桌面，首页和屏保用每天更新的影视剧照。它的部分代码、工具和安全约束（禁用不卸载、不 root、Home 保护等）来自 CleanYourTV（MIT），见 [README](../README.md) 与 [AGENTS.md](../AGENTS.md)。本页写 Reel 自己的功能、安装和注意事项。
+Reel TV 是一个独立项目：给小米/红米电视用的简洁桌面，首页和屏保用每天更新的影视剧照。它的部分代码、工具和安全约束（禁用不卸载、不 root、Home 保护等）来自 CleanYourTV（MIT），见 [README](../README.md) 与 [AGENTS.md](../AGENTS.md)。本页写 Reel TV 自己的功能、安装和注意事项。
 
 ## 与 CleanYourTV 的区别
 
@@ -29,7 +29,7 @@ Reel 是一个独立项目：给小米/红米电视用的简洁桌面，首页�
 
 ```sh
 adb connect <电视 IP>:5555
-adb install -r Reel-v0.1.0.apk
+adb install -r Reel-TV-v0.1.1.apk
 # 小米专用配置（见下方「小米/红米电视的配置」），放进桌面的主题目录
 adb shell mkdir -p /sdcard/Android/data/io.github.tpxcer.reel/files
 adb push config.json /sdcard/Android/data/io.github.tpxcer.reel/files/config.json
@@ -47,7 +47,7 @@ adb shell settings put secure voice_interaction_service io.github.tpxcer.reel/co
 adb shell am start -n io.github.tpxcer.reel/com.gathin.tvhome.MainActivity
 ```
 
-- **不要**禁用原厂桌面 `com.mitv.tvhome`，也不要用 `set-home-activity` 把 Reel 设为默认桌面：这版固件不允许第三方默认桌面，会弹出空的选择器。`launcher/build-and-install.sh`（来自 CleanYourTV）面向能设第三方默认桌面的电视，小米/红米请用上面的手动步骤。
+- **不要**禁用原厂桌面 `com.mitv.tvhome`，也不要用 `set-home-activity` 把 Reel TV 设为默认桌面：这版固件不允许第三方默认桌面，会弹出空的选择器。`launcher/build-and-install.sh`（来自 CleanYourTV）面向能设第三方默认桌面的电视，小米/红米请用上面的手动步骤。
 - 用真实遥控器试 Home、长按音量和小爱；ADB 注入的按键不算数。用完关闭 ADB 调试。
 - 卸载：`adb uninstall io.github.tpxcer.reel`，系统会移除它的辅助服务，Home 回到原厂桌面。语音位一般也会被系统清掉，可以用 `adb shell settings get secure voice_interaction_service` 确认；还留着就改回安装前的值。
 
@@ -114,8 +114,8 @@ cd launcher
 ./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease
 ```
 
-自己构建的版本用调试签名。Releases 里的 APK 用 Reel 的发布密钥签名（`-PreelSigning=<keystore.properties>`，密钥不在仓库里），所以自己构建的版本不能直接覆盖安装 Release 版，需要先卸载。每个 Release 都附 APK 的 SHA-256。
+自己构建的版本用调试签名。Releases 里的 APK 用 Reel TV 的发布密钥签名（`-PreelSigning=<keystore.properties>`，密钥不在仓库里），所以自己构建的版本不能直接覆盖安装 Release 版，需要先卸载。每个 Release 都附 APK 的 SHA-256。
 
 ## 许可
 
-MIT，见 [LICENSE](../LICENSE)。Reel 新增的部分版权归 tpxcer；来自 CleanYourTV 的代码按 MIT 要求保留其作者的版权声明（Copyright (c) 2026 Gathin）。
+MIT，见 [LICENSE](../LICENSE)。Reel TV 新增的部分版权归 tpxcer；来自 CleanYourTV 的代码按 MIT 要求保留其作者的版权声明（Copyright (c) 2026 Gathin）。
