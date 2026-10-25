@@ -49,7 +49,7 @@ adb shell am start -n io.github.tpxcer.reel/com.gathin.tvhome.MainActivity
 
 - **不要**禁用原厂桌面 `com.mitv.tvhome`，也不要用 `set-home-activity` 把 Reel TV 设为默认桌面：这版固件不允许第三方默认桌面，会弹出空的选择器。`launcher/build-and-install.sh`（来自 CleanYourTV）面向能设第三方默认桌面的电视，小米/红米请用上面的手动步骤。
 - 用真实遥控器试 Home、长按音量和小爱；ADB 注入的按键不算数。用完关闭 ADB 调试。
-- 卸载：`adb uninstall io.github.tpxcer.reel`，系统会移除它的辅助服务，Home 回到原厂桌面。语音位一般也会被系统清掉，可以用 `adb shell settings get secure voice_interaction_service` 确认；还留着就改回安装前的值。
+- 卸载：`adb uninstall io.github.tpxcer.reel`，系统会移除它的辅助服务和通知监听，Home 回到原厂桌面。**语音位不会自动清掉**（MiTV-ASTP0 实测），卸载后执行 `adb shell settings put secure voice_interaction_service ""`，或改回安装前的值。
 
 ## TMDB 密钥（必须自己申请）
 
