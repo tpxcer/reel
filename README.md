@@ -1,8 +1,8 @@
 # Reel（剧照桌面）
 
-> English: Reel is a clean home screen for Xiaomi/Redmi Android TVs, based on [CleanYourTV](https://github.com/Gathin23/cleanyourtv). Home and the screensaver show this week's film and series stills from TMDB (with your own free TMDB key), Bing's image of the day or your own pictures. No root, nothing uninstalled. Tested on one TV so far.
+> English: Reel is an independent clean home screen for Xiaomi/Redmi Android TVs, built in part on code from [CleanYourTV](https://github.com/Gathin23/cleanyourtv) (MIT). Home and the screensaver show this week's film and series stills from TMDB (with your own free TMDB key), Bing's image of the day or your own pictures. No root, nothing uninstalled. Tested on one TV so far.
 
-给小米/红米电视用的简洁桌面，基于 CleanYourTV。
+给小米/红米电视用的简洁桌面，独立项目。
 
 - **首页**：全屏剧照，左上小时钟和日期，底栏上方一行「片名 · 来源」加三行简介。
 - **背景来源**在电视上切换：TMDB 本周热门剧照、必应每日一图、场景壁纸、自己的海报。
@@ -10,11 +10,11 @@
 - **不 root、不卸载任何东西**：小米固件不允许第三方默认桌面，Reel 用辅助服务接管 Home 键，长按音量不受影响。
 - **TMDB 用你自己的免费密钥**，在电视上填写；软件里不内置任何人的密钥。
 
-**下载**：[Releases](https://github.com/tpxcer/reel/releases)　**安装与配置**：[docs/FORK.md](docs/FORK.md)
+**下载**：[Releases](https://github.com/tpxcer/reel/releases)　**安装与配置**：[docs/REEL.md](docs/REEL.md)
 
 目前只在 Redmi MiTV-ASTP0（Android 9）上实测，其他型号请先按上游流程备份。
 
-Reel 以 MIT 协议发布，基于 Gathin 的 CleanYourTV（Copyright (c) 2026 Gathin），上游的工具、规则和安全约束沿用。以下为上游 CleanYourTV 的原始说明。
+Reel 以 MIT 协议发布，部分代码、工具和安全约束来自 Gathin 的 CleanYourTV（Copyright (c) 2026 Gathin，按 MIT 要求保留）。下文保留 CleanYourTV 的原始说明，供参考其工具和流程。
 
 ---
 

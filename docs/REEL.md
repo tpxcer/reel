@@ -1,14 +1,14 @@
 # Reel（剧照桌面）
 
-> English: Reel is a fork of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv) tuned for Xiaomi/Redmi TVs, with an
-> Aerial-style home, optional TMDB / Bing backdrops (network, off by default, your own TMDB key) and a TMDB screensaver.
-> It breaks the upstream rule "no network in the launcher", so it lives here and not upstream.
+> English: Reel is an independent home screen for Xiaomi/Redmi TVs, built in part on code from
+> [CleanYourTV](https://github.com/Gathin23/cleanyourtv) (MIT). It has an Aerial-style home, optional TMDB / Bing
+> backdrops (network, off by default, your own TMDB key) and a TMDB screensaver.
 
-Reel 是 CleanYourTV 的分叉：一个给小米/红米电视用的简洁桌面，首页和屏保用每天更新的影视剧照。上游的规则、工具和安全约束（禁用不卸载、不 root、Home 保护等）全部沿用，见 [README](../README.md) 与 [AGENTS.md](../AGENTS.md)。本页只写 Reel 多出来的部分。
+Reel 是一个独立项目：给小米/红米电视用的简洁桌面，首页和屏保用每天更新的影视剧照。它的部分代码、工具和安全约束（禁用不卸载、不 root、Home 保护等）来自 CleanYourTV（MIT），见 [README](../README.md) 与 [AGENTS.md](../AGENTS.md)。本页写 Reel 自己的功能、安装和注意事项。
 
-## 与上游的区别
+## 与 CleanYourTV 的区别
 
-- **桌面会联网**（上游禁止）：只用于取背景图，默认全部关闭。
+- **桌面会联网**（CleanYourTV 不联网）：只用于取背景图，默认全部关闭。
   - TMDB 热门剧照：`trending_posters` 打开并填写**你自己的** TMDB 密钥后，每天最多一次访问 `api.tmdb.org`、`image.tmdb.org`。
   - 必应每日一图：只在「桌面设置 → 背景」选了它时，每天最多一次访问 `cn.bing.com`。
   - 不收集、不上传任何数据，没有统计。
@@ -16,12 +16,12 @@ Reel 是 CleanYourTV 的分叉：一个给小米/红米电视用的简洁桌面�
 - **TMDB 屏保**：小米固件的屏保计时到点时不启动 Android 屏保，而是发广播 `com.duokan.intent.action.show.screensaver`；`home_idle_clock_minutes` 大于 0 时本桌面接收它，用已保存的 TMDB 剧照轮播（片名、简介、署名）。
 - **小米/红米 Home 兼容**：固件不允许第三方默认桌面，Home 由辅助服务接管；另有待机后自动补回服务、语音交互位豁免、顶栏「原厂桌面」入口。见下方「权限与风险」。
 - **打开应用的方式**：有标准桌面入口（LAUNCHER）的应用按该入口启动，回到它时接着原来的页面，不会重开启动页。
-- **包名** `io.github.tpxcer.reel`（Java 类名仍是 `com.gathin.tvhome.*`），可以和上游版本同时安装。组件要写全，例如 `io.github.tpxcer.reel/com.gathin.tvhome.MainActivity`。上游的故障排查、`examples/` 和 `docs/devices/` 里的 `com.gathin.tvhome` 是上游的包名，照做时换成 `io.github.tpxcer.reel`，短写的 `.HomeKeyService` 要写全为 `com.gathin.tvhome.HomeKeyService`。
-- APK 比上游的 480 KB 体积上限大，本仓库 CI 的体积门槛为 512 KB；上游给自己仓库审 PR 的 maintainer-bot 工作流不随本仓库发布。
+- **包名** `io.github.tpxcer.reel`（Java 类名仍是 `com.gathin.tvhome.*`），可以和 CleanYourTV 同时安装。组件要写全，例如 `io.github.tpxcer.reel/com.gathin.tvhome.MainActivity`。仓库里沿用自 CleanYourTV 的故障排查、`examples/` 和 `docs/devices/` 中的 `com.gathin.tvhome` 是 CleanYourTV 的包名，照做时换成 `io.github.tpxcer.reel`，短写的 `.HomeKeyService` 要写全为 `com.gathin.tvhome.HomeKeyService`。
+- 本仓库 CI 的 APK 体积门槛为 512 KB（CleanYourTV 为 480 KB）；CleanYourTV 维护者审 PR 用的 maintainer-bot 工作流不在本仓库。
 
 ## 已测试设备
 
-只在 **Redmi MiTV-ASTP0（Android 9 / SDK 28，固件 25.6.6.OS2.0.19.0.PSTAATV）** 上实测。其他型号未测试，请先按上游流程备份。
+只在 **Redmi MiTV-ASTP0（Android 9 / SDK 28，固件 25.6.6.OS2.0.19.0.PSTAATV）** 上实测。其他型号未测试，请先按 README 中的流程备份。
 
 ## 安装 Release 版（小米/红米）
 
@@ -47,7 +47,7 @@ adb shell settings put secure voice_interaction_service io.github.tpxcer.reel/co
 adb shell am start -n io.github.tpxcer.reel/com.gathin.tvhome.MainActivity
 ```
 
-- **不要**禁用原厂桌面 `com.mitv.tvhome`，也不要用 `set-home-activity` 把 Reel 设为默认桌面：这版固件不允许第三方默认桌面，会弹出空的选择器。上游的 `launcher/build-and-install.sh` 面向能设第三方默认桌面的电视，小米/红米请用上面的手动步骤。
+- **不要**禁用原厂桌面 `com.mitv.tvhome`，也不要用 `set-home-activity` 把 Reel 设为默认桌面：这版固件不允许第三方默认桌面，会弹出空的选择器。`launcher/build-and-install.sh`（来自 CleanYourTV）面向能设第三方默认桌面的电视，小米/红米请用上面的手动步骤。
 - 用真实遥控器试 Home、长按音量和小爱；ADB 注入的按键不算数。用完关闭 ADB 调试。
 - 卸载：`adb uninstall io.github.tpxcer.reel`，系统会移除它的辅助服务，Home 回到原厂桌面。语音位一般也会被系统清掉，可以用 `adb shell settings get secure voice_interaction_service` 确认；还留着就改回安装前的值。
 
@@ -70,7 +70,7 @@ TMDB 要求署名：界面每张图都标注「图片来自 TMDB」，设置页�
 
 ## 小米/红米电视的配置
 
-上游的 `config.xml` 保持中性默认值，本机专用的值写在主题的 `config.json` 里（`tools/theme.sh` 推送）。MiTV-ASTP0 用到的关键项：
+源码里的 `config.xml` 保持中性默认值，本机专用的值写在主题的 `config.json` 里（`tools/theme.sh` 推送）。MiTV-ASTP0 用到的关键项：
 
 ```json
 {
@@ -107,7 +107,7 @@ TMDB 要求署名：界面每张图都标注「图片来自 TMDB」，设置页�
 
 ## 构建
 
-与上游相同（JDK 17、Android SDK 34）。默认包名 `io.github.tpxcer.reel`，可用 `launcherApplicationId` 换成别的：
+需要 JDK 17、Android SDK 34。默认包名 `io.github.tpxcer.reel`，可用 `launcherApplicationId` 换成别的：
 
 ```sh
 cd launcher
@@ -118,4 +118,4 @@ cd launcher
 
 ## 许可
 
-MIT，沿用上游的 [LICENSE](../LICENSE)（Copyright (c) 2026 Gathin），本分叉的改动同样以 MIT 发布。
+MIT，见 [LICENSE](../LICENSE)。Reel 新增的部分版权归 tpxcer；来自 CleanYourTV 的代码按 MIT 要求保留其作者的版权声明（Copyright (c) 2026 Gathin）。
